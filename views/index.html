@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Race Data Graph</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #333;
+        }
+
+        nav li {
+            float: left;
+        }
+
+        nav li a {
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        nav li a:hover {
+            background-color: #111;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li><a href="/">Login</a></li>
+            <li><a href="event">Event Page</a></li>
+            <li><a href="historical">Historical Data</a></li>
+        </ul>
+    </nav>
+    <canvas id="raceChart"></canvas>
+    <script>
+        var socket = io();
+        var ctx = document.getElementById('raceChart').getContext('2d');
+        var raceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: []
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        socket.on('raceDataUpdate', function (data) {
+
+            let dataset = raceChart.data.datasets.find(ds => ds.label === data.pilotName);
+
+            if (dataset) {
+                // Update existing dataset
+                dataset.data.push({
+                    x: (data.gateData[data.gateData.length - 1].lap.toString()) + "-" + data.gateData[data.gateData.length - 1].gate.toString(),
+                    y: data.gateData[data.gateData.length - 1].time
+                });
+            } else {
+                // Create new dataset for this pilot
+                raceChart.data.datasets.push({
+                    label: data.pilotName,
+                    data: [{
+                        x: (data.gateData[data.gateData.length - 1].lap.toString()) + "-" + data.gateData[data.gateData.length - 1].gate.toString(),
+                        y: data.gateData[data.gateData.length - 1].time
+                    }],
+                    borderColor: data.colour, // Assuming pilotData has a color property
+                    fill: false // Set to true if you want the area under the line filled
+                });
+            }
+
+            // Update the chart
+            raceChart.update();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Event Page</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #333;
+        }
+
+        nav li {
+            float: left;
+        }
+
+        nav li a {
+            display: block;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
+
+        nav li a:hover {
+            background-color: #111;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .finish-times {
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        #raceStatusBox {
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ddd;
+            background-color: #f8f8f8;
+            font-size: 18px;
+        }
+
+        .form-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        .dropdown-section {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <ul>
+            <li><a href="/">Login</a></li>
+            <li><a href="event">Event Page</a></li>
+            <li><a href="historical">Historical Data</a></li>
+        </ul>
+    </nav>
+    <div class="form-section">
+        <h2>Create New Event</h2>
+        <form id="createEventForm">
+            <label for="eventName">Event Name:</label>
+            <input type="text" id="eventName" name="name" required>
+
+            <label for="eventStartDate">Event Start Date:</label>
+            <input type="date" id="eventStartDate" name="eventStartDate" required>
+
+            <label for="heatCount">Heat Count:</label>
+            <input type="number" id="heatCount" name="heatCount" required>
+
+            <button type="submit">Create Event</button>
+        </form>
+    </div>
+    <div class="dropdown-section">
+        <label for="eventDropdown">Select Event:</label>
+        <select id="eventDropdown">
+            <option value="">--Select an Event--</option>
+            <!-- Event options will be populated here -->
+        </select>
+    </div>
+    <div class="finish-times">
+        <h1>Event Finish Times</h1>
+        <table id="finishTimesTable">
+            <thead>
+                <tr>
+                    <th>Pilot Name</th>
+                </tr>
+            </thead>
+            <tbody id="finishTimesBody">
+                <!-- Pilot names and times will be added here -->
+            </tbody>
+        </table>
+    </div>
+    <div class="race-status">
+        <h2>Race Status</h2>
+        <div id="raceStatusBox">Waiting for race status...</div>
+    </div>
+    <div class="race-chart">
+        <h1>Race Chart</h1>
+        <canvas id="raceChart"></canvas>
+    </div>
+
+    <script>
+        fetch('/current-events')
+            .then(response => response.json())
+            .then(events => {
+                const dropdown = document.getElementById('eventDropdown');
+                events.forEach(event => {
+                    const option = document.createElement('option');
+                    option.value = event.id; // Assuming each event has an 'id'
+                    option.textContent = event.name; // Assuming each event has a 'name'
+                    dropdown.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error:', error));
+
+        // Event Listener for Dropdown Selection
+        document.getElementById('eventDropdown').addEventListener('change', function () {
+            const selectedEventId = this.value;
+            if (selectedEventId) {
+                fetch('/current-finish-times')
+                    .then(response => response.json())
+                    .then(fillTimesTable)
+                    .catch(error => console.error('Error:', error));
+
+                // Fetch and update Current Race Times and Chart for the selected event
+                
+                // fetchCurrentRaceTimes(selectedEventId);
+                // updateChartForEvent(selectedEventId);
+                // These functions need to be defined to handle the updates
+            }
+        });
+
+        document.getElementById('createEventForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('You must be logged in to create an event.');
+                return;
+            }
+
+            const eventData = {
+                name: document.getElementById('eventName').value,
+                eventStartDate: document.getElementById('eventStartDate').value,
+                heatCount: document.getElementById('heatCount').value
+            };
+
+            fetch('/create-event', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `${token}`
+                },
+                body: JSON.stringify(eventData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Event created:', data);
+                    // Handle successful event creation
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Handle errors
+                });
+        });
+
+        function fillTimesTable(data) {
+            const tableBody = document.getElementById('finishTimesBody');
+
+            tableBody.innerHTML = "";
+            data.forEach((item, index) => {
+                let row = tableBody.insertRow();
+                let pilotNameCell = row.insertCell(0);
+                pilotNameCell.textContent = item.pilotName;
+
+                item.times.forEach(time => {
+                    let timeCell = row.insertCell();
+                    timeCell.textContent = time;
+                });
+
+                const tableHead = document.getElementById('finishTimesTable').tHead;
+                var columnCount = tableHead.rows[0].cells.length - 1;
+                if (columnCount < item.times.length) {
+
+                    for (let i = columnCount + 1; i <= item.times.length; i++) {
+                        let newHeader = tableHead.rows[0].insertCell();
+                        newHeader.outerHTML = `<th>Race ${i}</th>`;
+                    }
+                }
+            });
+        }
+
+        function addTimeToTable(data) {
+            var pilotRow = getRowByPilotName(data.pilotName);
+            var cell = pilotRow.insertCell();
+            cell.textContent = data.time;
+
+            const tableHead = document.getElementById('finishTimesTable').tHead;
+            var columnCount = tableHead.rows[0].cells.length - 1;
+            if (pilotRow.cells.length > tableHead.rows[0].cells.length) {
+                let newHeader = tableHead.rows[0].insertCell();
+                newHeader.outerHTML = `<th>Race ${pilotRow.cells.length}</th>`;
+            }
+        }
+
+        function getRowByPilotName(pilotName) {
+            const table = document.getElementById('finishTimesTable');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                // Assuming the pilot's name is in the first cell
+                const currentPilotName = rows[i].cells[0].textContent;
+                if (currentPilotName === pilotName) {
+                    return rows[i]; // This is the row you're looking for
+                }
+            }
+
+            return null; // Return null if no row is found for the given pilot name
+        }
+
+        // Setup for Race Chart
+        var socket = io();
+        var ctx = document.getElementById('raceChart').getContext('2d');
+        var raceChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: []
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        socket.on('raceStatus', function (status) {
+            var statusBox = document.getElementById('raceStatusBox');
+            statusBox.textContent = `Race Status: ${status}`;
+            if (status === 'start') {
+                raceChart.data.datasets = [];
+            }
+        });
+
+        socket.on('raceDataUpdate', function (data) {
+            let dataset = raceChart.data.datasets.find(ds => ds.label === data.pilotName);
+            if (dataset) {
+                dataset.data.push({
+                    x: (data.gateData[data.gateData.length - 1].lap.toString()) + "-" + data.gateData[data.gateData.length - 1].gate.toString(),
+                    y: data.gateData[data.gateData.length - 1].time
+                });
+            } else {
+                raceChart.data.datasets.push({
+                    label: data.pilotName,
+                    data: [{
+                        x: (data.gateData[data.gateData.length - 1].lap.toString()) + "-" + data.gateData[data.gateData.length - 1].gate.toString(),
+                        y: data.gateData[data.gateData.length - 1].time
+                    }],
+                    borderColor: data.colour,
+                    fill: false
+                });
+            }
+
+            raceChart.options.animation = false;
+
+            raceChart.update();
+            raceChart.update();
+
+            // Optionally, re-enable the animation after the update
+            raceChart.options.animation = {
+                duration: 1000 // or whatever your default duration is
+            };
+
+
+            if (data.finished == true) {
+                addTimeToTable({ pilotName: data.pilotName, time: data.gateData[data.gateData.length - 1].time })
+            }
+        });
+    </script>
+</body>
+
+</html>
