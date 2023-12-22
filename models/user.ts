@@ -139,6 +139,11 @@ class User extends UserData {
             return false;
         }
     }
+
+    static async findByIds(ids: Array<string>): Promise<Array<User>> {
+        const users = await this.find({ _id: { $in: ids } });
+        return users as Array<User>;
+    }
 }
 
 export default User;

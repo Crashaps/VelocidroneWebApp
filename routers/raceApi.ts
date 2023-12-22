@@ -57,6 +57,7 @@ raceRouter.post("/racedata", auth.byApiKey, async (req: RequestPlus, res: Respon
     for (const pilotName of Object.keys(raceData["racedata"])) {
 
         const pilotRace = raceData["racedata"][pilotName];
+        const pilotFinished = pilotRace.finished.toLowerCase() == "true";
 
         let data = await Race.findOneByPilotAndEventId(pilotName, event._id.toString(), false);
 
@@ -65,11 +66,11 @@ raceRouter.post("/racedata", auth.byApiKey, async (req: RequestPlus, res: Respon
                 continue;
             }
 
-            data.finished = pilotRace.finished.toLowerCase() == "true";
+            data.finished = pilotFinished;
         }
         else {
             const heatNumber = await Race.countByPilotAndEventId(pilotName, String(event._id), true);
-            data = Race.createRace(pilotName, pilotRace.finished.toLowerCase() == "true", false, "#" + pilotRace.colour, new Date(Date.now()), heatNumber + 1, event._id);
+            data = Race.createRace(pilotName, pilotFinished, false, "#" + pilotRace.colour, new Date(Date.now()), heatNumber + 1, event._id, req.user._id);
         }
 
         data.addGateData(pilotRace.position, pilotRace.lap, pilotRace.gate, pilotRace.time);
@@ -77,8 +78,33 @@ raceRouter.post("/racedata", auth.byApiKey, async (req: RequestPlus, res: Respon
         await data.save();
 
         if (req.io) {
-            req.io.emit("raceDataUpdate", data);
+            req.io.in(`${event._id}|${req.user._id}`).emit("raceDataUpdate", data);
+
+            if (data.finished == true) {
+                let finishedForHeat = event.pointsbased == false ? null : await Race.findByEventIdAndHeatNumber(event._id, data.heatNumber, true);
+
+                if (finishedForHeat !== null) {
+                    finishedForHeat = finishedForHeat.sort((a, b) => b.gateData[a.gateData.length - 1].time - a.gateData[a.gateData.length - 1].time);
+
+                    finishedForHeat.forEach((race) => {
+                        race.points = (finishedForHeat?.indexOf(race) ?? 0) + 1;
+                        race.save();
+                    });
+                }
+
+                req.io.in(`${event._id}`).emit("pilotFinished",
+                    {
+                        pilotName: data.pilotName,
+                        time: data.gateData[data.gateData.length - 1].time,
+                        pilotPoints: finishedForHeat?.map((race) => ({
+                            pilotName: race.pilotName,
+                            points: race.points
+                        }))
+                    });
+            }
         }
+
+
     }
 
     res.send("Data received and saved");

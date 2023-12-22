@@ -15,6 +15,7 @@ export interface IRaceData extends Document {
 	gateData: IGateData[];
 	heatDateTime?: Date;
 	heatNumber: number;
+	points?: number;
 	eventId: string;
 	hostId: string;
 }
@@ -32,7 +33,9 @@ const RaceDataSchema: Schema = new mongoose.Schema({
 	}],
 	heatDateTime: Date,
 	heatNumber: Number,
-	eventId: String
+	points: Number,
+	eventId: String,
+	hostId: String
 });
 
 const RaceData: Model<IRaceData> = mongoose.model<IRaceData>("RaceData", RaceDataSchema);
@@ -47,7 +50,9 @@ class Race extends RaceData {
 		this.colour = race?.colour ?? "";
 		this.heatDateTime = race?.heatDateTime;
 		this.heatNumber = race?.heatNumber ?? 0;
+		this.points = race?.points;
 		this.eventId = race?.eventId ?? "";
+		this.hostId = race?.hostId ?? "";
 		this.aborted = race?.aborted ?? false;
 
 		this.gateData = race?.gateData ?? [];
@@ -71,7 +76,17 @@ class Race extends RaceData {
 		return false;
 	}
 
-	static createRace(pilotName: string, finished: boolean, aborted: boolean, colour: string, heatDateTime: Date, heatNumber: number, eventId: string): Race {
+	static createRace(
+		pilotName: string,
+		finished: boolean,
+		aborted: boolean,
+		colour: string,
+		heatDateTime: Date,
+		heatNumber: number,
+		eventId: string,
+		hostId: string,
+		points?: number
+	): Race {
 		const race = new Race();
 		race.pilotName = pilotName;
 		race.finished = finished;
@@ -79,13 +94,24 @@ class Race extends RaceData {
 		race.colour = colour;
 		race.heatDateTime = heatDateTime;
 		race.heatNumber = heatNumber;
+		race.points = points;
 		race.eventId = eventId;
+		race.hostId = hostId;
 		race.gateData = [];
 		return race;
 	}
 
 	static async getByPilotName(pilotName: string): Promise<Race[]> {
 		return (await this.find({ pilotName: pilotName })) as Race[];
+	}
+
+	static async findByEventIdAndHeatNumber(eventId: string, heatNumber: number, finished?: boolean, aborted: boolean = false): Promise<Race[]> {
+		if (finished === undefined) {
+			return await this.find({ eventId: eventId, heatNumber: heatNumber, aborted: aborted });
+		}
+		else {
+			return await this.find({ eventId: eventId, heatNumber: heatNumber, finished: finished, aborted: aborted });
+		}
 	}
 
 	static async findByEventId(eventId: string, finished?: boolean, aborted: boolean = false): Promise<Race[]> {
@@ -99,12 +125,12 @@ class Race extends RaceData {
 
 	static async findByEventIdAndHostId(eventId: string, hostId: string, finished?: boolean, aborted: boolean = false): Promise<Race[]> {
 		if (finished === undefined) {
-            return await this.find({ eventId: eventId, hostId: hostId, aborted: aborted });
-        }
-        else {
-            return await this.find({ eventId: eventId, hostId: hostId, finished: finished, aborted: aborted });
-        }
-	}	
+			return await this.find({ eventId: eventId, hostId: hostId, aborted: aborted });
+		}
+		else {
+			return await this.find({ eventId: eventId, hostId: hostId, finished: finished, aborted: aborted });
+		}
+	}
 
 	static async findOneByPilotAndEventId(pilotName: string, eventId: string, finished?: boolean, aborted: boolean = false): Promise<Race | null> {
 		if (finished === undefined) {

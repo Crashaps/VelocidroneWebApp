@@ -133,33 +133,43 @@
     </div>
 
     <script>
+        var eventHostSocket = io();
+        var eventSocket = io();
+
+        function connectToSocket(socket, room) {
+            socket.disconnect();
+            socket.on("connect", function () {
+                socket.emit("room", room);
+                console.log(`Socket: ${socket.id} connected to ${room}`);
+            });
+            socket.connect();
+        }
+
         fetch('/current-events')
             .then(response => response.json())
             .then(events => {
                 const dropdown = document.getElementById('eventDropdown');
                 events.forEach(event => {
-                    const option = document.createElement('option');
-                    option.value = event.id; // Assuming each event has an 'id'
-                    option.textContent = event.name; // Assuming each event has a 'name'
-                    dropdown.appendChild(option);
+                    event.hosts.forEach(host => {
+                        const option = document.createElement('option');
+                        option.value = `${event.id}|${host.id}`;
+                        option.textContent = `${event.name}: ${host.name}`;
+                        dropdown.appendChild(option);
+                    })
                 });
             })
             .catch(error => console.error('Error:', error));
 
-        // Event Listener for Dropdown Selection
         document.getElementById('eventDropdown').addEventListener('change', function () {
-            const selectedEventId = this.value;
+            const selectedEventId = this.value.split('|')[0];
             if (selectedEventId) {
-                fetch('/current-finish-times')
+                fetch('/current-finish-times/' + selectedEventId)
                     .then(response => response.json())
                     .then(fillTimesTable)
                     .catch(error => console.error('Error:', error));
 
-                // Fetch and update Current Race Times and Chart for the selected event
-                
-                // fetchCurrentRaceTimes(selectedEventId);
-                // updateChartForEvent(selectedEventId);
-                // These functions need to be defined to handle the updates
+                connectToSocket(eventHostSocket, this.value);
+                connectToSocket(eventSocket, selectedEventId);
             }
         });
 
@@ -252,7 +262,6 @@
         }
 
         // Setup for Race Chart
-        var socket = io();
         var ctx = document.getElementById('raceChart').getContext('2d');
         var raceChart = new Chart(ctx, {
             type: 'line',
@@ -268,7 +277,7 @@
             }
         });
 
-        socket.on('raceStatus', function (status) {
+        eventHostSocket.on('raceStatus', function (status) {
             var statusBox = document.getElementById('raceStatusBox');
             statusBox.textContent = `Race Status: ${status}`;
             if (status === 'start') {
@@ -276,7 +285,7 @@
             }
         });
 
-        socket.on('raceDataUpdate', function (data) {
+        eventHostSocket.on('raceDataUpdate', function (data) {
             let dataset = raceChart.data.datasets.find(ds => ds.label === data.pilotName);
             if (dataset) {
                 dataset.data.push({
@@ -300,15 +309,13 @@
             raceChart.update();
             raceChart.update();
 
-            // Optionally, re-enable the animation after the update
             raceChart.options.animation = {
-                duration: 1000 // or whatever your default duration is
+                duration: 1000
             };
+        });
 
-
-            if (data.finished == true) {
-                addTimeToTable({ pilotName: data.pilotName, time: data.gateData[data.gateData.length - 1].time })
-            }
+        eventSocket.on('pilotFinished', function (data) {
+            addTimeToTable({ pilotName: data.pilotName, time: data.time });
         });
     </script>
 </body>

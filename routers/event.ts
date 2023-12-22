@@ -3,18 +3,26 @@ import express, { Request, Response } from "express";
 import RequestPlus from "../models/RequestPlus";
 import Auth from "../middleware/auth";
 import Event from "../models/event";
-import Race, {IRaceData} from "../models/race";
+import User from "../models/user";
+import Race, { IRaceData } from "../models/race";
 import { RaceFinishTimes } from "../models/raceFinishTimes";
 
 const eventRouter = express.Router();
 
 eventRouter.get("/current-events", async (req: Request, res: Response) => {
 	const events = await Event.find({});
-	const e = events.map((p) =>
-		({
-			id: p.id,
-			name: p.name
-		}));
+	const users = await User.findByIds(events.flatMap((e) => e.hostIds));
+
+	const e = await Promise.all(events.map(async (p) =>
+	({
+		id: p.id,
+		name: p.name,
+		hosts: await Promise.all(p.hostIds.map(async (h) => ({
+			id: h,
+			name: users.find((u) => u.id == h)?.name
+		})))
+	})));
+	
 	res.json(e);
 });
 
@@ -24,7 +32,7 @@ eventRouter.post("/create-event", Auth.byToken, async (req: RequestPlus, res: Re
 		return;
 	}
 
-	const event = Event.createEvent(req.body.name, new Date(Date.now()), new Date(req.body.eventStartDate), req.body.heatCount, [req.user._id], false);
+	const event = Event.createEvent(req.body.name, new Date(Date.now()), new Date(req.body.eventStartDate), req.body.heatCount, [req.user._id], false, true);
 
 	await event.save();
 });
@@ -37,7 +45,7 @@ eventRouter.get("/current-finish-times/:eventId", async (req: Request, res: Resp
 
 		const pilotFinishTimes: RaceFinishTimes[] = [];
 
-		raceData.forEach((data) => {			
+		raceData.forEach((data) => {
 			const pilot = pilotFinishTimes.find((e) => e.pilotName === data.pilotName);
 
 			if (pilot === undefined) {

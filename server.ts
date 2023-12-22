@@ -26,8 +26,8 @@ mongoose.connect(settings.mongodb);
 app.use(bodyParser.json());
 
 app.use((req: Request, res: Response, next) => {
-	(req as RequestPlus).io = io;
-	next();
+    (req as RequestPlus).io = io;
+    next();
 });
 
 app.use(viewRouter);
@@ -36,9 +36,13 @@ app.use(userRouter);
 app.use(eventRouter);
 
 server.listen(3000, () => {
-	console.log("Server running on port 3000");
+    console.log("Server running on port 3000");
 });
 
-io.on("connection", () => {
-	console.log("a user connected");
+io.on("connection", function (socket) {
+    socket.on("room", function (room) {
+        socket.join(room);
+        console.log(`Client: ${socket.id} connected to room: ${room}`);
+    });
+    console.log(`Connection from client: ${socket.id}`);
 });

@@ -7,6 +7,7 @@ interface IEventData extends Document {
 	heatCount: number;
 	hostIds: Array<string>;
 	active: boolean;
+	pointsbased: boolean;
 }
 
 const EventDataSchema: Schema = new mongoose.Schema({
@@ -15,7 +16,8 @@ const EventDataSchema: Schema = new mongoose.Schema({
 	eventStartDate: Date,
 	heatCount: Number,
 	hostIds: Array,
-	active: Boolean
+	active: Boolean,
+	pointsBased: Boolean
 });
 
 const EventData: Model<IEventData> = mongoose.model<IEventData>("EventData", EventDataSchema);
@@ -31,12 +33,13 @@ class Event extends EventData {
 		this.heatCount = event?.heatCount ?? 0;
 		this.hostIds = event?.hostIds ?? [];
 		this.active = event?.active ?? false;
+		this.pointsbased = event?.pointsbased ?? false;
 
 		this._id = event?._id ?? new mongoose.Types.ObjectId();
 		this.isNew = event?.isNew ?? true;
 	}
 
-	static createEvent(name: string, createdDate: Date, eventStartDate: Date, heatCount: number, hostIds: string[], active: boolean): Event {
+	static createEvent(name: string, createdDate: Date, eventStartDate: Date, heatCount: number, hostIds: string[], active: boolean, pointsBased: boolean): Event {
 		const event = new Event();
 		event.name = name;
 		event.createDate = createdDate;
@@ -44,6 +47,7 @@ class Event extends EventData {
 		event.heatCount = heatCount;
 		event.hostIds = hostIds;
 		event.active = active;
+		event.pointsbased = pointsBased;
 		return event;
 	}
 
