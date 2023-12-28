@@ -7,6 +7,10 @@ viewRouter.get("/", (req: Request, res: Response) => {
   res.sendFile( path.parse(__dirname).dir + "/views/login.html");
 });
 
+viewRouter.get("/index", (req: Request, res: Response) => {
+  res.sendFile( path.parse(__dirname).dir + "/views/index.html");
+});
+
 viewRouter.get("/event", (req: Request, res: Response) => {
   res.sendFile(path.parse(__dirname).dir + "/views/event.html");
 });

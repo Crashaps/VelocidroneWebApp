@@ -5,6 +5,7 @@ import express, { Application, Request, Response } from "express";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
 import http from "http";
+import fs from "fs";
 import { Server as SocketIOServer } from "socket.io";
 
 const app: Application = express();
@@ -15,15 +16,14 @@ import viewRouter from "./routers/views";
 import raceApi from "./routers/raceApi";
 import userRouter from "./routers/user";
 import eventRouter from "./routers/event";
-
 import RequestPlus from "./models/RequestPlus";
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const settings = require("./settings.json");
+const settings = JSON.parse(fs.readFileSync("./settings.json", "utf-8"));
 
 mongoose.connect(settings.mongodb);
 
 app.use(bodyParser.json());
+app.use(express.static(__dirname + "/public"));
 
 app.use((req: Request, res: Response, next) => {
     (req as RequestPlus).io = io;

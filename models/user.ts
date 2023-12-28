@@ -6,17 +6,19 @@ import mongoose, { Document, Schema, Model } from "mongoose";
 const MINIMUMPASSWORDLENGTH = 8;
 
 interface IUserData extends Document {
-    name: string;    
+    name: string;
     password: string;
     email: string;
     token: string;
+    apiKey: string;
 }
 
 const UserDataSchema: Schema = new mongoose.Schema({
-    name: String,    
+    name: String,
     password: String,
     email: String,
-    token: String
+    token: String,
+    apiKey: String
 });
 
 const UserData: Model<IUserData> = mongoose.model<IUserData>("UserData", UserDataSchema);
@@ -30,6 +32,7 @@ class User extends UserData {
         this.password = user?.password ?? "";
         this.email = user?.email ?? "";
         this.token = user?.token ?? "";
+        this.apiKey = user?.apiKey ?? "";
 
         this._id = user?._id ?? new mongoose.Types.ObjectId();
         this.isNew = user?.isNew ?? true;
@@ -62,7 +65,7 @@ class User extends UserData {
         }
         if (validator.isAlphanumeric(this.password)) {
             throw new Error("Password must contain a non-alphanumeric character.");
-        }        
+        }
 
         return super.validate();
     }
@@ -96,21 +99,21 @@ class User extends UserData {
         return user as User;
     }
 
-    static async getByName(name: string): Promise<User> {        
-        const user = await this.findOne({ name: name});
+    static async getByName(name: string): Promise<User> {
+        const user = await this.findOne({ name: name });
         if (!user) {
             throw new Error();
         }
 
         return user as User;
     }
-    
+
     static async getByApiKey(apiKey: string): Promise<User> {
         const user = await this.findOne({ apiKey: apiKey });
         if (!user) {
             throw new Error();
         }
-        
+
         return user as User;
     }
 
@@ -143,6 +146,14 @@ class User extends UserData {
     static async findByIds(ids: Array<string>): Promise<Array<User>> {
         const users = await this.find({ _id: { $in: ids } });
         return users as Array<User>;
+    }
+
+    static createUser(name: string, password: string, email: string): User {
+        const user = new User();
+        user.name = name;
+        user.password = password;
+        user.email = email;
+        return user;
     }
 }
 

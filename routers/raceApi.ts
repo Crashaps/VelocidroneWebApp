@@ -8,6 +8,13 @@ import RequestPlus from "../models/RequestPlus";
 const raceRouter = express.Router();
 
 raceRouter.post("/racestatus", auth.byApiKey, async (req: RequestPlus, res: Response) => {
+    const event = await Event.findOneByHostId(req.user?._id);
+
+    if (event === null) {
+        res.status(400).send("Event not found");
+        return;
+    }
+
     if (req.body.racestatus.raceAction == "start") {
         // raceDateTime = new Date(Date.now());
         // raceStarted = true;
@@ -16,13 +23,6 @@ raceRouter.post("/racestatus", auth.byApiKey, async (req: RequestPlus, res: Resp
         //raceStarted = false;
     }
     else if (req.body.racestatus.raceAction == "abort") {
-        const event = await Event.findOneByHostId(req.user?._id);
-
-        if (event === null) {
-            res.status(400).send("Event not found");
-            return;
-        }
-
         const races = await Race.findByEventIdAndHostId(event?._id, req.user?._id, false);
 
         races.forEach((race) => {
@@ -32,7 +32,7 @@ raceRouter.post("/racestatus", auth.byApiKey, async (req: RequestPlus, res: Resp
     }
 
     if (req.io) {
-        req.io.emit("raceStatus", req.body.racestatus.raceAction);
+        req.io.in(`${event._id}|${req.user?._id}`).emit("raceStatus", req.body.racestatus.raceAction);
     }
 
     res.send("Data received and saved");

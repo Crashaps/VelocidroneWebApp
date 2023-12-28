@@ -78,6 +78,15 @@ eventRouter.get("/historical-data/:pilotName", async (req: Request, res: Respons
 	}
 });
 
+eventRouter.get("/components", async (req: Request, res: Response) => {
+	try {
+		res.send("Race Chart")
+	}
+	catch(error) {
+	
+	}
+});
+
 function createHistoricData(data: IRaceData) {
 	return {
 		pilotName: data.pilotName,
