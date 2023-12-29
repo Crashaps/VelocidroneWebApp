@@ -15,34 +15,24 @@
 </head>
 
 <body>
-  <nav>
-    <ul>
-      <li><a href="/">Login</a></li>
-      <li><a href="event">Event Page</a></li>
-      <li><a href="historical">Historical Data</a></li>
-    </ul>
-  </nav>
-  <div class="form-section">
-    <h2>Create New Event</h2>
-    <form id="createEventForm">
-      <label for="eventName">Event Name:</label>
-      <input type="text" id="eventName" name="name" required />
-
-      <label for="eventStartDate">Event Start Date:</label>
-      <input type="date" id="eventStartDate" name="eventStartDate" required />
-
-      <label for="heatCount">Heat Count:</label>
-      <input type="number" id="heatCount" name="heatCount" required />
-
-      <button type="submit">Create Event</button>
-    </form>
+  <div class="titlebar">
+    <div class="topnav">
+      <a href="index">Home</a>
+      <a class="active" href="event">Current Event</a>
+      <a href="historical">Historical Data</a>
+      <a href="login" style="float:right">Login</a>
+      <a href="admin" style="float:right">Admin</a>
+    </div> 
   </div>
+
   <div class="dropdown-section">
+    <div>
     <label for="eventDropdown">Select Event:</label>
     <select id="eventDropdown">
       <option value="">--Select an Event--</option>
       <!-- Event options will be populated here -->
     </select>
+    </div>
   </div>
 
   <mini-window-closable id="eventTimes" class="finish-times">
@@ -60,8 +50,10 @@
   </mini-window-closable>
 
   <div class="race-status">
+    <div>
     <h2>Race Status</h2>
-    <div id="raceStatusBox">Waiting for race status...</div>
+    Waiting for race status...
+    </div>
   </div>
 
   <mini-window-closable id="race-chart" class="race-chart">

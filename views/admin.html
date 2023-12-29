@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/event.css">
+    <link rel="stylesheet" href="css/layout.css">
+
+    <style>
+      
+    </style>
+</head>
+
+<body>
+    <div class="titlebar">
+        <div class="topnav">
+          <a href="index">Home</a>
+          <a href="event">Current Event</a>
+          <a href="historical">Historical Data</a>
+          <a href="login" style="float:right">Login</a>
+          <a class="active" href="admin" style="float:right">Admin</a>
+        </div> 
+    </div>
+    <div class="section">
+        <div>
+        <h2>Create New Event</h2>
+        <form id="createEventForm">
+          <label for="eventName">Event Name:</label>
+          <input type="text" id="eventName" name="name" required />
+    
+          <label for="eventStartDate">Event Start Date:</label>
+          <input type="date" id="eventStartDate" name="eventStartDate" required />
+    
+          <label for="heatCount">Heat Count:</label>
+          <input type="number" id="heatCount" name="heatCount" required />
+    
+          <button type="submit">Create Event</button>
+        </form>
+        </div>
+      </div>
+
+</body>
+
+</html>
