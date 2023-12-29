@@ -9,11 +9,33 @@
   <script defer src="web-components/side-bar-window.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Eastside Event Demo</title>
+  <title>Velocevent</title>
   <link rel="stylesheet" href="css/event.css">
 </head>
 
 <body>
+  <div class="titlebar">
+    <div class="topnav">
+      <a class="active" href="index">Home</a>
+      <a href="event">Current Event</a>
+      <a href="historical">Historical Data</a>
+      <a href="login" style="float:right">Login</a>
+    </div> 
+  </div>
+
+  <mini-window-closable id="tempInfo">
+    <!-- New window -->
+    <!-- <div class="titlebar"> -->
+      <div class="topnav">
+            <a>Information</a>
+      </div>
+      <div>
+        <a>Race Time: 1:00am EST</a>
+      </div>
+    
+      <!-- </div>  -->
+  </mini-window-closable>
+
 
   <!-- PB Times Table -->
   <mini-window-closable id="pbTimes">
