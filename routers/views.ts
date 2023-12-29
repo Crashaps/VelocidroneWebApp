@@ -4,7 +4,7 @@ import path from "path";
 const viewRouter = express.Router();
 
 viewRouter.get("/", (req: Request, res: Response) => {
-  res.sendFile( path.parse(__dirname).dir + "/views/login.html");
+  res.sendFile( path.parse(__dirname).dir + "/views/index.html");
 });
 
 viewRouter.get("/index", (req: Request, res: Response) => {
@@ -17,6 +17,14 @@ viewRouter.get("/event", (req: Request, res: Response) => {
 
 viewRouter.get("/historical", (req: Request, res: Response) => {
   res.sendFile(path.parse(__dirname).dir +  "/views/historical.html");
+});
+
+viewRouter.get("/login", (req: Request, res: Response) => {
+  res.sendFile( path.parse(__dirname).dir + "/views/login.html");
+});
+
+viewRouter.get("/admin", (req: Request, res: Response) => {
+  res.sendFile( path.parse(__dirname).dir + "/views/admin.html");
 });
 
 export default viewRouter;

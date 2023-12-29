@@ -27,7 +27,7 @@ body {
     background: #333;
     color: white;
     margin: 0;
-    padding: 20px;
+    padding: 2px;
     overflow: hidden;
 }
 
@@ -52,4 +52,46 @@ td {
 
 th {
     background-color: #2e2d2d;
+}
+
+.section div {
+    float: left;
+    padding: 12px 12px;
+    border-radius: 10px;
+    border: 5px ridge rgba(0, 0, 0, 0.85);
+    background: rgba(64, 64, 64, 0.50);
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25); 
+}
+.section h1 {
+    margin-top: 0%;
+    padding: 5px 5px;
+}
+.form-section div {
+    float: top;
+    padding: 12px 12px;
+    border-radius: 10px;
+    border: 5px ridge rgba(0, 0, 0, 0.85);
+    background: rgba(64, 64, 64, 0.50);
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25); 
+}
+.dropdown-section div {
+    float: left;
+    padding: 12px 12px;
+    border-radius: 10px;
+    border: 5px ridge rgba(0, 0, 0, 0.85);
+    background: rgba(64, 64, 64, 0.50);
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25); 
+}
+.race-status div {
+    float: right;
+    padding: 5px 5px;
+    width:30%;
+    border-radius: 10px;
+    border: 5px ridge rgba(0, 0, 0, 0.85);
+    background: rgba(64, 64, 64, 0.50);
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+}
+.race-status h2 {
+    margin-top: 0%;
+    padding: 5px 5px;
 }
