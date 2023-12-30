@@ -4,7 +4,11 @@
   "description": "",
   "scripts": {
     "start": "node server.js",
-    "build": "./node_modules/.bin/tsc --outDir ./build && xcopy .\\public .\\build\\public\\ /s /e /y && xcopy .\\views .\\build\\views\\ /s /e /y && copy ./package.json ./build/package.json && copy ./settings.json ./build/settings.json"
+    "build": "tsc --outDir ./build && npm run copyPublic && npm run copyViews && npm run copyPackageJson && npm run copySettingsJson",  
+    "copyPublic": "xcopy .\\public .\\build\\public\\ /s /e /y",
+    "copyViews": "xcopy .\\views .\\build\\views\\ /s /e /y",
+    "copyPackageJson": "copy .\\package.json .\\build\\package.json",
+    "copySettingsJson": "copy .\\settings.json .\\build\\settings.json"
   },
   "author": "",
   "license": "ISC",

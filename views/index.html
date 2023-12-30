@@ -2,17 +2,15 @@
 <html lang="en">
 
 <head>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
- 
-  <script defer src="web-components/mini-window.js"></script>
-  <script defer src="web-components/mini-window-closable.js"></script>
-  <script defer src="web-components/side-bar-window.js"></script>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Velocevent</title>
-  <link rel="stylesheet" href="css/event.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script defer src="web-components/mini-window.js"></script>
+    <script defer src="web-components/mini-window-closable.js"></script>
+    <script defer src="web-components/side-bar-window.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Velocevent</title>
+    <link rel="stylesheet" href="css/event.css">
 </head>
-
 <body>
   <div class="titlebar">
     <div class="topnav">
@@ -23,7 +21,6 @@
       <a href="admin" style="float:right">Admin</a>
     </div> 
   </div>
-
   <mini-window-closable id="tempInfo">
     <div class="section">
       <!-- New window -->
@@ -37,8 +34,7 @@
     </div>
       <!-- </div>  -->
   </mini-window-closable>
-
-
+  
   <!-- PB Times Table -->
   <mini-window-closable id="pbTimes">
     <!-- Table Content -->
@@ -69,14 +65,11 @@
           <td>1:30.12</td>
           <td>3rd</td>
         </tr>
-        <!-- More pilots... -->
       </tbody>
     </table>
   </mini-window-closable>
 
-  <!-- Points Table -->
   <mini-window-closable id="points">
-    <!-- Table Content -->
     <table class="table">
       <thead>
         <tr>
@@ -108,14 +101,11 @@
           <td>4</td>
           <td>10</td>
         </tr>
-        <!-- More pilots... -->
       </tbody>
     </table>
   </mini-window-closable>
 
-  <!-- Race Rounds Table -->
   <mini-window-closable id="raceRounds">
-    <!-- Table Content -->
     <table class="table">
       <thead>
         <tr>
@@ -135,7 +125,6 @@
           <td>Race 3 (C)</td>
           <td>Zoom, Dash, Quick</td>
         </tr>
-        <!-- More races... -->
       </tbody>
     </table>
   </mini-window-closable>
@@ -145,44 +134,149 @@
     <canvas id="raceChart"></canvas>
   </mini-window-closable>
 
-  <side-bar-window id="side-bar-window">
+    <mini-window-closable id="pbTimes">
+        <!-- Table Content -->
+        <table class="table">
+            <thead>
+                <tr>
+                    <th colspan="3">PB Times</th>
+                </tr>
+                <tr>
+                    <th>Pilot</th>
+                    <th>Time</th>
+                    <th>Pos.</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Speedy</td>
+                    <td>1:25.32</td>
+                    <td>1st</td>
+                </tr>
+                <tr>
+                    <td>Lightning</td>
+                    <td>1:27.45</td>
+                    <td>2nd</td>
+                </tr>
+                <tr>
+                    <td>RacerX</td>
+                    <td>1:30.12</td>
+                    <td>3rd</td>
+                </tr>
+                <!-- More pilots... -->
+            </tbody>
+        </table>
+    </mini-window-closable>
 
-  </side-bar-window>
-  <!-- Race Chart
+    <!-- Points Table -->
+    <mini-window-closable id="points">
+        <!-- Table Content -->
+        <table class="table">
+            <thead>
+                <tr>
+                    <th colspan="4">Points</th>
+                </tr>
+                <tr>
+                    <th>Pilot</th>
+                    <th>R1</th>
+                    <th>R2</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Speedy</td>
+                    <td>10</td>
+                    <td>8</td>
+                    <td>18</td>
+                </tr>
+                <tr>
+                    <td>Lightning</td>
+                    <td>8</td>
+                    <td>10</td>
+                    <td>18</td>
+                </tr>
+                <tr>
+                    <td>RacerX</td>
+                    <td>6</td>
+                    <td>4</td>
+                    <td>10</td>
+                </tr>
+                <!-- More pilots... -->
+            </tbody>
+        </table>
+    </mini-window-closable>
+
+    <!-- Race Rounds Table -->
+    <mini-window-closable id="raceRounds">
+        <!-- Table Content -->
+        <table class="table">
+            <thead>
+                <tr>
+                    <th colspan="2">Race Round 3</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Race 1 (A)</td>
+                    <td>Speedy, Lightning, RacerX</td>
+                </tr>
+                <tr>
+                    <td>Race 2 (B)</td>
+                    <td>Rocket, Flash, Bolt</td>
+                </tr>
+                <tr>
+                    <td>Race 3 (C)</td>
+                    <td>Zoom, Dash, Quick</td>
+                </tr>
+                <!-- More races... -->
+            </tbody>
+        </table>
+    </mini-window-closable>
+
+    <mini-window-closable id="race-chart" plop="goog">
+        <h1>Race Chart</h1>
+        <canvas id="raceChart"></canvas>
+    </mini-window-closable>
+
+    <side-bar-window id="side-bar-window">
+
+    </side-bar-window>
+    <!-- Race Chart
   <div id="race-chart" class="race-chart draggable resizable" style="top: 600px; left: 200px;">
     <h1>Race Chart</h1>
     <canvas id="raceChart"></canvas>
     <div id="resizer" class="resizer"></div>
   </div> -->
 
-  <script>
+    <script>
 
-    // Initialize draggable and resizable elements on window load
-    window.onload = function () {
-   
-      var ctx = document.getElementById("raceChart").getContext("2d");
-      var raceChart = new Chart(ctx, {
-        type: "line",
-        data: {
-          labels: ['Race 1', 'Race 2', 'Race 3', 'Race 4'],
-          datasets: [{
-            label: 'Performance',
-            data: [10, 12, 8, 15],
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            borderColor: 'rgba(255, 99, 132, 1)',
-            borderWidth: 1
-          }]
-        },
-        options: {
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
-        }
-      });
-    };
-  </script>
+        // Initialize draggable and resizable elements on window load
+        window.onload = function () {
+
+            var ctx = document.getElementById("raceChart").getContext("2d");
+            var raceChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: ['Race 1', 'Race 2', 'Race 3', 'Race 4'],
+                    datasets: [{
+                        label: 'Performance',
+                        data: [10, 12, 8, 15],
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        };
+    </script>
 
 </body>
 

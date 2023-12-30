@@ -2,15 +2,15 @@
 <html>
 
 <head>
-  <title>Event Page</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="/socket.io/socket.io.js"></script>
-  <script defer src="web-components/mini-window.js"></script>
-  <script defer src="web-components/mini-window-closable.js"></script>
-  <script defer src="web-components/side-bar-window.js"></script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="css/event.css">
-  <link rel="stylesheet" href="css/layout.css">
+    <title>Event Page</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="web-components/mini-window.js"></script>
+    <script defer src="web-components/mini-window-closable.js"></script>
+    <script defer src="web-components/side-bar-window.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="css/event.css">
+    <link rel="stylesheet" href="css/layout.css">
 
 </head>
 
@@ -21,283 +21,237 @@
       <a class="active" href="event">Current Event</a>
       <a href="historical">Historical Data</a>
       <a href="login" style="float:right">Login</a>
-      <a href="admin" style="float:right">Admin</a>
+      <a href="eventManage" style="float:right">Admin</a>
     </div> 
   </div>
-
-  <div class="dropdown-section">
-    <div>
-    <label for="eventDropdown">Select Event:</label>
-    <select id="eventDropdown">
-      <option value="">--Select an Event--</option>
-      <!-- Event options will be populated here -->
-    </select>
+    <div class="dropdown-section">
+        <label for="eventDropdown">Select Event:</label>
+        <select id="eventDropdown">
+            <option value="">--Select an Event--</option>
+            <!-- Event options will be populated here -->
+        </select>
     </div>
-  </div>
 
-  <mini-window-closable id="eventTimes" class="finish-times">
-    <h2>Event Finish Times</h2>
-    <table id="finishTimesTable">
-      <thead>
-        <tr>
-          <th>Pilot Name</th>
-        </tr>
-      </thead>
-      <tbody id="finishTimesBody">
-        <!-- Pilot names and times will be added here -->
-      </tbody>
-    </table>
-  </mini-window-closable>
+    <mini-window-closable id="eventTimes" class="finish-times">
+        <h2>Event Finish Times</h2>
+        <table id="finishTimesTable">
+            <thead>
+                <tr>
+                    <th>Pilot Name</th>
+                </tr>
+            </thead>
+            <tbody id="finishTimesBody">
+                <!-- Pilot names and times will be added here -->
+            </tbody>
+        </table>
+    </mini-window-closable>
 
-  <div class="race-status">
-    <div>
-    <h2>Race Status</h2>
-    Waiting for race status...
+    <div class="race-status">
+        <h2>Race Status</h2>
+        <div id="raceStatusBox">Waiting for race status...</div>
     </div>
-  </div>
 
-  <mini-window-closable id="race-chart" class="race-chart">
-    <h2>Race Chart</h2>
-    <canvas id="raceChart"></canvas>
-  </mini-window-closable>
+    <mini-window-closable id="race-chart" class="race-chart">
+        <h2>Race Chart</h2>
+        <canvas id="raceChart"></canvas>
+    </mini-window-closable>
 
-  <script>
-    var eventHostSocket = io();
-    var eventSocket = io();
+    <script>
+        window.onload = function () {
+            var eventHostSocket = io();
+            var eventSocket = io();
 
-    function connectToSocket(socket, room) {
-      socket.disconnect();
-      socket.on("connect", function () {
-        socket.emit("room", room);
-        console.log(`Socket: ${socket.id} connected to ${room}`);
-      });
-      socket.connect();
-    }
+            var ctx = document.getElementById("raceChart").getContext("2d");
+            var raceChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    datasets: [],
+                },
+                options: {
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: "white",
+                                font: {
+                                    size: 15
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            ticks: {
+                                color: "white",
+                                font: {
+                                    size: 15,
+                                },
+                                stepSize: 1,
+                                beginAtZero: true
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: "white",
+                                font: {
+                                    size: 15
+                                },
+                                stepSize: 1,
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                },
+            });
 
-    fetch("/current-events")
-      .then((response) => response.json())
-      .then((events) => {
-        const dropdown = document.getElementById("eventDropdown");
-        events.forEach((event) => {
-          event.hosts.forEach((host) => {
-            const option = document.createElement("option");
-            option.value = `${event.id}|${host.id}`;
-            option.textContent = `${event.name}: ${host.name}`;
-            dropdown.appendChild(option);
-          });
-        });
-      })
-      .catch((error) => console.error("Error:", error));
+            eventHostSocket.on("raceStatus", function (status) {
+                var statusBox = document.getElementById("raceStatusBox");
+                statusBox.textContent = `Race Status: ${status}`;
+                if (status === "start") {
+                    raceChart.data.datasets = [];
+                }
+            });
 
-    document
-      .getElementById("eventDropdown")
-      .addEventListener("change", function () {
-        const selectedEventId = this.value.split("|")[0];
-        if (selectedEventId) {
-          fetch("/current-finish-times/" + selectedEventId)
+            eventHostSocket.on("raceDataUpdate", function (data) {
+                let dataset = raceChart.data.datasets.find(
+                    (ds) => ds.label === data.pilotName
+                );
+                if (dataset) {
+                    dataset.data.push({
+                        x:
+                            data.gateData[data.gateData.length - 1].lap.toString() +
+                            "-" +
+                            data.gateData[data.gateData.length - 1].gate.toString(),
+                        y: data.gateData[data.gateData.length - 1].time,
+                    });
+
+                    dataset.data = dataset.data.sort(function (a, b) { return a.y - b.y; });
+
+                } else {
+                    raceChart.data.datasets.push({
+                        label: data.pilotName,
+                        data: [
+                            {
+                                x:
+                                    data.gateData[data.gateData.length - 1].lap.toString() +
+                                    "-" +
+                                    data.gateData[data.gateData.length - 1].gate.toString(),
+                                y: data.gateData[data.gateData.length - 1].time,
+                            },
+                        ],
+                        borderColor: data.colour,
+                        fill: false,
+                    });
+                }
+
+                raceChart.options.animation = false;
+
+                raceChart.update();
+                raceChart.update();
+
+                raceChart.options.animation = {
+                    duration: 1000,
+                };
+            });
+
+            eventSocket.on("pilotFinished", function (data) {
+                addTimeToTable({ pilotName: data.pilotName, time: data.time });
+            });
+
+
+            document.getElementById("eventDropdown").addEventListener("focus", function () {
+                document.currentEventHost = this.value;
+            });
+
+            document.getElementById("eventDropdown").addEventListener("change", function () {
+                const selectedEventId = this.value.split("|")[0];
+                if (selectedEventId) {
+                    fetch("/current-finish-times/" + selectedEventId)
+                        .then((response) => response.json())
+                        .then(fillTimesTable)
+                        .catch((error) => console.error("Error:", error));
+
+                    if (document.currentEventHost != null) {
+                        eventHostSocket.emit("leave-room", document.currentEventHost);
+                        eventSocket.emit("leave-room", document.currentEventHost.split("|")[0]);
+                    }
+
+                    eventHostSocket.emit("join-room", this.value);
+                    eventSocket.emit("join-room", selectedEventId);
+
+                    document.currentEventHost = this.value;
+                }
+            });
+        };
+
+        fetch("/current-events")
             .then((response) => response.json())
-            .then(fillTimesTable)
+            .then((events) => {
+                const dropdown = document.getElementById("eventDropdown");
+                events.forEach((event) => {
+                    event.hosts.forEach((host) => {
+                        const option = document.createElement("option");
+                        option.value = `${event.id}|${host.id}`;
+                        option.textContent = `${event.name}: ${host.name}`;
+                        dropdown.appendChild(option);
+                    });
+                });
+            })
             .catch((error) => console.error("Error:", error));
 
-          connectToSocket(eventHostSocket, this.value);
-          connectToSocket(eventSocket, selectedEventId);
-        }
-      });
+        function fillTimesTable(data) {
+            const tableBody = document.getElementById("finishTimesBody");
 
-    document
-      .getElementById("createEventForm")
-      .addEventListener("submit", function (e) {
-        e.preventDefault();
+            tableBody.innerHTML = "";
+            data.forEach((item, index) => {
+                let row = tableBody.insertRow();
+                let pilotNameCell = row.insertCell(0);
+                pilotNameCell.textContent = item.pilotName;
 
-        const token = localStorage.getItem("token");
-        if (!token) {
-          alert("You must be logged in to create an event.");
-          return;
-        }
+                item.times.forEach((time) => {
+                    let timeCell = row.insertCell();
+                    timeCell.textContent = time;
+                });
 
-        const eventData = {
-          name: document.getElementById("eventName").value,
-          eventStartDate: document.getElementById("eventStartDate").value,
-          heatCount: document.getElementById("heatCount").value,
-        };
-
-        fetch("/create-event", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `${token}`,
-          },
-          body: JSON.stringify(eventData),
-        })
-          .then((response) => response.json())
-          .then((data) => {
-            console.log("Event created:", data);
-            // Handle successful event creation
-          })
-          .catch((error) => {
-            console.error("Error:", error);
-            // Handle errors
-          });
-      });
-
-    function fillTimesTable(data) {
-      const tableBody = document.getElementById("finishTimesBody");
-
-      tableBody.innerHTML = "";
-      data.forEach((item, index) => {
-        let row = tableBody.insertRow();
-        let pilotNameCell = row.insertCell(0);
-        pilotNameCell.textContent = item.pilotName;
-
-        item.times.forEach((time) => {
-          let timeCell = row.insertCell();
-          timeCell.textContent = time;
-        });
-
-        const tableHead = document.getElementById("finishTimesTable").tHead;
-        var columnCount = tableHead.rows[0].cells.length - 1;
-        if (columnCount < item.times.length) {
-          for (let i = columnCount + 1; i <= item.times.length; i++) {
-            let newHeader = tableHead.rows[0].insertCell();
-            newHeader.outerHTML = `<th>Race ${i}</th>`;
-          }
-        }
-      });
-    }
-
-    function addTimeToTable(data) {
-      var pilotRow = getRowByPilotName(data.pilotName);
-      var cell = pilotRow.insertCell();
-      cell.textContent = data.time;
-
-      const tableHead = document.getElementById("finishTimesTable").tHead;
-      var columnCount = tableHead.rows[0].cells.length - 1;
-      if (pilotRow.cells.length > tableHead.rows[0].cells.length) {
-        let newHeader = tableHead.rows[0].insertCell();
-        newHeader.outerHTML = `<th>Race ${pilotRow.cells.length - 1}</th>`;
-      }
-    }
-
-    function getRowByPilotName(pilotName) {
-      const table = document.getElementById("finishTimesTable");
-      const rows = table.getElementsByTagName("tr");
-
-      for (let i = 0; i < rows.length; i++) {
-        // Assuming the pilot's name is in the first cell
-        const currentPilotName = rows[i].cells[0].textContent;
-        if (currentPilotName === pilotName) {
-          return rows[i]; // This is the row you're looking for
-        }
-      }
-
-      return null; // Return null if no row is found for the given pilot name
-    }
-
-    window.onload = function () {
-
-      // Setup for Race Chart
-      var ctx = document.getElementById("raceChart").getContext("2d");
-      var raceChart = new Chart(ctx, {
-        type: "line",
-        data: {
-          datasets: [],
-        },
-        options: {
-          plugins: {  // 'legend' now within object 'plugins {}'
-            legend: {
-              labels: {
-                color: "white",  // not 'fontColor:' anymore
-                // fontSize: 18  // not 'fontSize:' anymore
-                font: {
-                  size: 15 // 'size' now within object 'font {}'
+                const tableHead = document.getElementById("finishTimesTable").tHead;
+                var columnCount = tableHead.rows[0].cells.length - 1;
+                if (columnCount < item.times.length) {
+                    for (let i = columnCount + 1; i <= item.times.length; i++) {
+                        let newHeader = tableHead.rows[0].insertCell();
+                        newHeader.outerHTML = `<th>Race ${i}</th>`;
+                    }
                 }
-              }
-            }
-          },
-          scales: {
-            y: {  // not 'yAxes: [{' anymore (not an array anymore)
-              ticks: {
-                color: "white", // not 'fontColor:' anymore
-                // fontSize: 18,
-                font: {
-                  size: 15, // 'size' now within object 'font {}'
-                },
-                stepSize: 1,
-                beginAtZero: true
-              }
-            },
-            x: {  // not 'xAxes: [{' anymore (not an array anymore)
-              ticks: {
-                color: "white",  // not 'fontColor:' anymore
-                //fontSize: 14,
-                font: {
-                  size: 15 // 'size' now within object 'font {}'
-                },
-                stepSize: 1,
-                beginAtZero: true
-              }
-            }
-          }
-        },
-      });
-
-      eventHostSocket.on("raceStatus", function (status) {
-        var statusBox = document.getElementById("raceStatusBox");
-        statusBox.textContent = `Race Status: ${status}`;
-        if (status === "start") {
-          raceChart.data.datasets = [];
-        }
-      });
-
-      eventHostSocket.on("raceDataUpdate", function (data) {
-        let dataset = raceChart.data.datasets.find(
-          (ds) => ds.label === data.pilotName
-        );
-        if (dataset) {
-          dataset.data.push({
-            x:
-              data.gateData[data.gateData.length - 1].lap.toString() +
-              "-" +
-              data.gateData[data.gateData.length - 1].gate.toString(),
-            y: data.gateData[data.gateData.length - 1].time,
-          });
-
-          dataset.data = dataset.data.sort(function (a, b) { return a.y - b.y; });
-
-        } else {
-          raceChart.data.datasets.push({
-            label: data.pilotName,
-            data: [
-              {
-                x:
-                  data.gateData[data.gateData.length - 1].lap.toString() +
-                  "-" +
-                  data.gateData[data.gateData.length - 1].gate.toString(),
-                y: data.gateData[data.gateData.length - 1].time,
-              },
-            ],
-            borderColor: data.colour,
-            fill: false,
-          });
+            });
         }
 
-        raceChart.options.animation = false;
+        function addTimeToTable(data) {
+            var pilotRow = getRowByPilotName(data.pilotName);
+            var cell = pilotRow.insertCell();
+            cell.textContent = data.time;
 
-        raceChart.update();
-        raceChart.update();
+            const tableHead = document.getElementById("finishTimesTable").tHead;
+            var columnCount = tableHead.rows[0].cells.length - 1;
+            if (pilotRow.cells.length > tableHead.rows[0].cells.length) {
+                let newHeader = tableHead.rows[0].insertCell();
+                newHeader.outerHTML = `<th>Race ${pilotRow.cells.length - 1}</th>`;
+            }
+        }
 
-        raceChart.options.animation = {
-          duration: 1000,
-        };
-      });
+        function getRowByPilotName(pilotName) {
+            const table = document.getElementById("finishTimesTable");
+            const rows = table.getElementsByTagName("tr");
 
-      eventSocket.on("pilotFinished", function (data) {
-        addTimeToTable({ pilotName: data.pilotName, time: data.time });
-      });
-    }
+            for (let i = 0; i < rows.length; i++) {
+                // Assuming the pilot's name is in the first cell
+                const currentPilotName = rows[i].cells[0].textContent;
+                if (currentPilotName === pilotName) {
+                    return rows[i]; // This is the row you're looking for
+                }
+            }
 
+            return null; // Return null if no row is found for the given pilot name
+        }
 
-  </script>
+    </script>
 </body>
 
 </html>

@@ -22,7 +22,7 @@ eventRouter.get("/current-events", async (req: Request, res: Response) => {
 			name: users.find((u) => u.id == h)?.name
 		})))
 	})));
-	
+
 	res.json(e);
 });
 
@@ -82,10 +82,62 @@ eventRouter.get("/components", async (req: Request, res: Response) => {
 	try {
 		res.send("Race Chart")
 	}
-	catch(error) {
-	
+	catch (error) {
+
 	}
 });
+
+eventRouter.get("/list-races/:eventId/:pilotName", async (req: Request, res: Response) => {
+	try {
+        const eventId = req.params.eventId;
+        const pilotName = req.params.pilotName;
+        const races = await Race.find({ eventId: eventId, pilotName: pilotName });
+        res.json(races.map(createHeatList));
+    } catch (error) {
+        res.status(500).send("Error fetching historical data");
+    }
+});
+
+eventRouter.get("/list-pilots/:eventId", async (req: Request, res: Response) => {
+	const eventId = req.params.eventId;
+	const races = await Race.find({ eventId: eventId });
+
+	const pilotNames = races.map((race) => race.pilotName);
+
+	res.json([...new Set(pilotNames)]);
+});
+
+eventRouter.delete("/delete-race/:raceId", Auth.byToken, async (req: RequestPlus, res: Response) => {
+	const race = await Race.findById(req.params.raceId);
+	if (!race) {
+		res.status(404).send();
+        return;
+	}
+
+	const deleteResult = await race.deleteOne();
+
+	if (deleteResult.deletedCount == 0) {
+		res.status(500).send("Failed to delete");
+	}
+
+	if (race) {
+		if (await Race.decrementHeatNumber(race.pilotName, race.eventId, 1, race.heatNumber)){
+			res.status(200).send("Success");
+		} else {
+			res.status(500).send("Failed");
+		}
+	} else {
+		res.status(500).send("Error deleting race");
+	}
+});
+
+function createHeatList(data: IRaceData){
+	return {
+		heat: data.heatNumber,
+        time: data.gateData[data.gateData.length - 1].time,
+		_id: data._id
+	};
+}
 
 function createHistoricData(data: IRaceData) {
 	return {
