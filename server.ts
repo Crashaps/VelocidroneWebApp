@@ -40,9 +40,20 @@ server.listen(3000, () => {
 });
 
 io.on("connection", function (socket) {
-    socket.on("room", function (room) {
+    socket.on("join-room", function (room) {
         socket.join(room);
         console.log(`Client: ${socket.id} connected to room: ${room}`);
+    });
+    socket.on("leave-room", function (room) {
+        console.log(`Client: ${socket.id} disconnected from room: ${room}`);
+        socket.leave(room);
+    });
+    socket.on("disconnecting", () => {
+        console.log(socket.rooms);
+        socket.rooms.forEach((k, v) => {
+            console.log(`Client: ${socket.id} disconnected from room: ${k}`);
+            socket.leave(v);
+        });
     });
     console.log(`Connection from client: ${socket.id}`);
 });

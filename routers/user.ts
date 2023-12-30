@@ -10,7 +10,7 @@ userRouter.post("/login", Auth.byCredentials, async (req: RequestPlus, res: Resp
         res.status(401).send();
         return;
     }
-    
+
     const token = await req.user.generateAuthToken();
 
     res.json({ token });
