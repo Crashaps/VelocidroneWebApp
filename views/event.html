@@ -15,14 +15,15 @@
 </head>
 
 <body>
-    <nav>
-        <ul>
-            <li><a href="/">Login</a></li>
-            <li><a href="event">Event Page</a></li>
-            <li><a href="historical">Historical Data</a></li>
-            <li><a href="eventManage">Event Manage</a></li>
-        </ul>
-    </nav>
+  <div class="titlebar">
+    <div class="topnav">
+      <a href="index">Home</a>
+      <a class="active" href="event">Current Event</a>
+      <a href="historical">Historical Data</a>
+      <a href="login" style="float:right">Login</a>
+      <a href="eventManage" style="float:right">Admin</a>
+    </div> 
+  </div>
     <div class="dropdown-section">
         <label for="eventDropdown">Select Event:</label>
         <select id="eventDropdown">

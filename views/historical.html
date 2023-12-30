@@ -4,6 +4,7 @@
 <head>
     <title>Historical Pilot Data</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/event.css">
     <link rel="stylesheet" href="css/layout.css">
 
     <style>
@@ -12,20 +13,23 @@
 </head>
 
 <body>
-    <nav>
-        <ul>
-            <li><a href="/">Login</a></li>
-            <li><a href="/event">Event Page</a></li>
-            <li><a href="/historical">Historical Data</a></li>
-            <li><a href="eventManage">Event Manage</a></li>
-        </ul>
-    </nav>
-    <h1>Historical Pilot Data</h1>
-    <div>
-        <input type="text" id="pilotNameInput" placeholder="Enter Pilot Name">
-        <button id="fetchButton">Fetch Data</button>
+    <div class="titlebar">
+        <div class="topnav">
+          <a href="index">Home</a>
+          <a href="event">Current Event</a>
+          <a class="active" href="historical">Historical Data</a>
+          <a href="login" style="float:right">Login</a>
+          <a href="eventManage" style="float:right">Admin</a>
+        </div> 
     </div>
-
+    <div class="section">
+        <div>
+        <h1>Historical Pilot Data</h1>
+        <div>
+            <input type="text" id="pilotNameInput" placeholder="Enter Pilot Name">
+            <button id="fetchButton">Fetch Data</button>
+        </div>
+    </div>
     <table id="historicalDataTable">
         <thead>
             <tr>
