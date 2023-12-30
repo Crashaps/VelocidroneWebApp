@@ -15,10 +15,6 @@ viewRouter.get("/event", (req: Request, res: Response) => {
     res.sendFile(path.parse(__dirname).dir + "/views/event.html");
 });
 
-viewRouter.get("/eventManage", (req: Request, res: Response) => {
-    res.sendFile(path.parse(__dirname).dir + "/views/eventManage.html");
-});
-
 viewRouter.get("/historical", (req: Request, res: Response) => {
     res.sendFile(path.parse(__dirname).dir + "/views/historical.html");
 });

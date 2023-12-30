@@ -15,21 +15,24 @@
 </head>
 
 <body>
-  <div class="titlebar">
-    <div class="topnav">
-      <a href="index">Home</a>
-      <a class="active" href="event">Current Event</a>
-      <a href="historical">Historical Data</a>
-      <a href="login" style="float:right">Login</a>
-      <a href="eventManage" style="float:right">Admin</a>
-    </div> 
-  </div>
-    <div class="dropdown-section">
-        <label for="eventDropdown">Select Event:</label>
-        <select id="eventDropdown">
-            <option value="">--Select an Event--</option>
-            <!-- Event options will be populated here -->
-        </select>
+    <div class="titlebar">
+        <div class="topnav">
+            <a href="index">Home</a>
+            <a class="active" href="event">Current Event</a>
+            <a href="historical">Historical Data</a>
+            <a href="login" style="float:right">Login</a>
+            <a href="admin" style="float:right">Admin</a>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="dropdown-section">
+            <label for="eventDropdown">Select Event:</label>
+            <select id="eventDropdown">
+                <option value="">--Select an Event--</option>
+                <!-- Event options will be populated here -->
+            </select>
+        </div>
     </div>
 
     <mini-window-closable id="eventTimes" class="finish-times">
@@ -46,9 +49,11 @@
         </table>
     </mini-window-closable>
 
-    <div class="race-status">
-        <h2>Race Status</h2>
-        <div id="raceStatusBox">Waiting for race status...</div>
+    <div class="section">
+        <div class="race-status">
+            <h2>Race Status</h2>
+            <div id="raceStatusBox">Waiting for race status...</div>
+        </div>
     </div>
 
     <mini-window-closable id="race-chart" class="race-chart">

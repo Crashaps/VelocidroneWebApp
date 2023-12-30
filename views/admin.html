@@ -2,14 +2,16 @@
 <html>
 
 <head>
-    <title>Admin</title>
+    <title>Event Page</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="web-components/mini-window.js"></script>
+    <script defer src="web-components/mini-window-closable.js"></script>
+    <script defer src="web-components/side-bar-window.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/event.css">
     <link rel="stylesheet" href="css/layout.css">
 
-    <style>
-      
-    </style>
 </head>
 
 <body>
@@ -20,26 +22,232 @@
           <a href="historical">Historical Data</a>
           <a href="login" style="float:right">Login</a>
           <a class="active" href="admin" style="float:right">Admin</a>
-        </div> 
-    </div>
-    <div class="section">
-        <div>
-        <h2>Create New Event</h2>
-        <form id="createEventForm">
-          <label for="eventName">Event Name:</label>
-          <input type="text" id="eventName" name="name" required />
-    
-          <label for="eventStartDate">Event Start Date:</label>
-          <input type="date" id="eventStartDate" name="eventStartDate" required />
-    
-          <label for="heatCount">Heat Count:</label>
-          <input type="number" id="heatCount" name="heatCount" required />
-    
-          <button type="submit">Create Event</button>
-        </form>
         </div>
       </div>
+    <div class="form-section">
+        <h2>Create New Event</h2>
+        <form id="createEventForm">
+            <label for="eventName">Event Name:</label>
+            <input type="text" id="eventName" name="name" required />
 
+            <label for="eventStartDate">Event Start Date:</label>
+            <input type="date" id="eventStartDate" name="eventStartDate" required />
+
+            <label for="heatCount">Heat Count:</label>
+            <input type="number" id="heatCount" name="heatCount" required />
+
+            <button type="submit">Create Event</button>
+        </form>
+    </div>
+
+    <div class="dropdown-section">
+        <label for="eventDropdown">Select Event:</label>
+        <select id="eventDropdown">
+            <option value="">--Select an Event--</option>
+            <!-- Event options will be populated here -->
+        </select>
+    </div>
+
+    <div class="dropdown-section">
+        <label for="eventPilotDropdown">Select Pilot:</label>
+        <select id="eventPilotDropdown">
+            <option value="">--Select a Pilot--</option>
+        </select>
+    </div>
+
+    <div id="pilotRaceContainer">
+        <table id="pilotRaceTable">
+            <thead>
+                <tr>
+                    <th>Heat</th>
+                    <th>Time</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="pilotRaces">
+                <!-- Finish times will be populated here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        window.onload = function () {
+            document.getElementById('createEventForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                var eventData = {
+                    name: document.getElementById('eventName').value,
+                    eventStartDate: document.getElementById('eventStartDate').value,
+                    heatCount: document.getElementById('heatCount').value
+                };
+
+                const token = localStorage.getItem("token");
+                if (!token) {
+                    alert("You must be logged in to create an event.");
+                    return;
+                }
+
+                fetch('/create-event', {
+                    method: 'POST',
+                    body: JSON.stringify(eventData),
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token }
+                }).then(response => response.json())
+                    .then(data => console.log(data))
+                    .catch(error => console.error('Error:', error));
+            });
+
+            fetch("/current-events")
+                .then((response) => response.json())
+                .then((events) => {
+                    const dropdown = document.getElementById("eventDropdown");
+                    events.forEach((event) => {
+                        event.hosts.forEach((host) => {
+                            const option = document.createElement("option");
+                            option.value = `${event.id}`;
+                            option.textContent = `${event.name}`;
+                            dropdown.appendChild(option);
+                        });
+                    });
+                })
+                .catch((error) => console.error("Error:", error));
+
+            document
+                .getElementById("eventDropdown")
+                .addEventListener("change", function () {
+                    const eventId = this.value;
+
+                    if (eventId) {
+                        document.eventId = eventId;
+                        loadPilots(eventId);
+                    }
+                });
+
+            document
+                .getElementById("eventPilotDropdown")
+                .addEventListener("change", function () {
+                    const splitString = this.value.split("|");
+                    const selectedPilotName = splitString[1];
+                    const eventId = splitString[0];
+
+                    if (eventId) {
+                        document.pilotName = selectedPilotName
+                        loadPilotRaces(eventId, selectedPilotName);
+                    }
+                });
+
+        }
+
+        function loadPilots(eventId) {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                alert("You must be logged in to create an event.");
+                return;
+            }
+
+            fetch(`/list-pilots/${eventId}`, {
+                method: "GET",
+                headers: {
+                    Authorization: `${token}`,
+                }
+            }).then(response => response.json())
+                .then(data => {
+                    const dropdown = document.getElementById("eventPilotDropdown");
+                    dropdown.innerHTML = "";
+                    const option = document.createElement("option");
+                    option.value = "";
+                    option.textContent = "--Select a Pilot--";
+                    dropdown.appendChild(option);
+
+                    data.forEach((pilot) => {
+                        const option = document.createElement("option");
+                        option.value = `${eventId}|${pilot}`;
+                        option.textContent = pilot;
+                        dropdown.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading pilot races:', error);
+                    // Handle errors, e.g., show a notification to the user
+                });
+        }
+
+        function loadPilotRaces(eventId, pilotName) {
+            const token = localStorage.getItem("token");
+            if (!token) {
+                alert("You must be logged in to create an event.");
+                return;
+            }
+
+            fetch(`/list-races/${eventId}/${encodeURIComponent(pilotName)}`,
+                {
+                    method: "GET",
+                    headers: {
+                        Authorization: `${token}`,
+                    }
+                })
+                .then(response => response.json())
+                .then(races => {
+                    const racesListElement = document.getElementById('pilotRaceTable').querySelector('tbody');
+                    racesListElement.innerHTML = ''; // Clear existing list
+
+                    // Populate the list with race entries
+                    races.forEach((race, index) => {
+                        const row = racesListElement.insertRow();
+                        row.innerHTML = `
+                    <td>${race.heat}</td>                    
+                    <td>${race.time}</td>
+                    <td>
+                        <button onclick="deleteRace('${race._id}', this)">Delete</button>
+                    </td>
+                `;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading pilot races:', error);
+                    // Handle errors, e.g., show a notification to the user
+                });
+        }
+
+        // Function to view race details
+        function viewRaceDetails(raceId) {
+            // Fetch and display details for the selected race
+            // ...
+
+            console.log('View details for race:', raceId);
+        }
+
+        // Function to delete a race
+        function deleteRace(raceId, buttonElement) {
+            buttonElement.disabled = true;
+            // Send a request to the server to delete the race
+            const token = localStorage.getItem("token");
+            if (!token) {
+                alert("You must be logged in to create an event.");
+                buttonElement.disabled = false;
+                return;
+            }
+
+            fetch(`/delete-race/${raceId}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `${token}`,
+                }
+            }).then(response => {
+                if (!response.ok) {
+                    buttonElement.disabled = false;
+                    throw new Error('Failed to delete the race.');
+                }
+
+                loadPilotRaces(document.eventId, document.pilotName)
+            }).catch(error => {
+                console.error('Error deleting race:', error);
+                buttonElement.disabled = false;
+                // Handle errors, e.g., show a notification to the user
+            });
+
+            console.log('Deleting race with ID:', raceId);
+        }
+    </script>
 </body>
 
 </html>
