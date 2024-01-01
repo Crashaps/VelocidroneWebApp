@@ -3,7 +3,7 @@
 class MiniWindow extends HTMLElement {
     constructor() {
         super();
-  
+
 
     }
 
@@ -40,7 +40,7 @@ class MiniWindow extends HTMLElement {
         this.currentMouseX = 0;
         this.currentMouseY = 0;
         this.prevMouseDownX = 0,
-        this.prevMouseDownY = 0;
+            this.prevMouseDownY = 0;
 
         this.onmousedown = this.initMouseDown;
 
@@ -49,7 +49,12 @@ class MiniWindow extends HTMLElement {
 
     // Save and restore positions
     savePosition() {
-        localStorage.setItem(this.id, JSON.stringify({ left: this.style.left, top: this.style.top }));
+        localStorage.setItem(this.id, JSON.stringify({
+            left: this.style.left,
+            top: this.style.top,
+            width: this.style.width,
+            height: this.style.height
+        }));
     }
 
     restorePosition() {
@@ -57,6 +62,8 @@ class MiniWindow extends HTMLElement {
         if (position) {
             this.style.left = position.left;
             this.style.top = position.top;
+            this.style.width = position.width == null ? this.offsetWidth : position.width;
+            this.style.height = position.height == null ? this.offsetHeight : position.height;
         }
     }
 

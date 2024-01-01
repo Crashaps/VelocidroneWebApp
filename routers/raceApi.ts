@@ -55,11 +55,35 @@ raceRouter.post("/racedata", auth.byApiKey, async (req: RequestPlus, res: Respon
     }
 
     for (const pilotName of Object.keys(raceData["racedata"])) {
-
         const pilotRace = raceData["racedata"][pilotName];
         const pilotFinished = pilotRace.finished.toLowerCase() == "true";
 
-        let data = await Race.findOneByPilotAndEventId(pilotName, event._id.toString(), false);
+        let data: Race | null;
+
+        let races = await Race.findByEventIdAndPilotName(event._id.toString(), pilotName, false);
+
+        if (races.length > 1) {
+            const heatNumber = races[0].heatNumber;
+            let first = races.reduce((prev, curr) => { return prev.heatDateTime ?? new Date() < (curr.heatDateTime ?? new Date()) ? prev : curr; });
+
+            if (races.every((race) => race.heatNumber == heatNumber)) {
+                await Promise.all(races.filter((race) => race !== first).map(async (race) => {
+                    race.aborted = true;
+                    race.gateData.forEach((gate) => {
+                        first.gateData.push(gate);
+                    });
+                    await race.save();
+                }));
+            }
+
+            data = first;
+        }
+        else if (races.length == 1) {
+            data = races[0];
+        }
+        else {
+            data = null;
+        }
 
         if (data !== null) {
             if (data.hasGateTime(pilotRace.time)) {

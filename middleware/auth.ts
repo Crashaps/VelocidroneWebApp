@@ -32,20 +32,16 @@ const auth = {
         try {
             const data = jwt.verify(token, settings.JWTKey) as jwt.JwtPayload;
 
-            try {
-                const user = await User.getByToken(data._id, token);
-                if (!user) {
-                    throw new Error();
-                }
-
-                req.user = user;
-                req.token = token;
-                next();
-            } catch (error) {
-                res.status(401).send({ error: "Not authorized to access this resource" });
+            const user = await User.getByToken(data._id, token);
+            if (!user) {
+                throw new Error();
             }
-        } catch (outerErr) {
-            res.status(500).send({ error: "Internal Server Error" });
+
+            req.user = user;
+            req.token = token;
+            next();
+        } catch (error) {
+            res.status(401).send({ error: "Not authorized to access this resource" });
         }
     },
     byCredentials: async (req: RequestPlus, res: Response, next: NextFunction) => {

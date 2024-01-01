@@ -4,7 +4,7 @@ import RequestPlus from "../models/RequestPlus";
 import Auth from "../middleware/auth";
 import Event from "../models/event";
 import User from "../models/user";
-import Race, { IRaceData } from "../models/race";
+import Race, { IRaceData, IGateData, IGateDataWithDelta } from "../models/race";
 import { RaceFinishTimes } from "../models/raceFinishTimes";
 
 const eventRouter = express.Router();
@@ -89,13 +89,13 @@ eventRouter.get("/components", async (req: Request, res: Response) => {
 
 eventRouter.get("/list-races/:eventId/:pilotName", async (req: Request, res: Response) => {
 	try {
-        const eventId = req.params.eventId;
-        const pilotName = req.params.pilotName;
-        const races = await Race.find({ eventId: eventId, pilotName: pilotName });
-        res.json(races.map(createHeatList));
-    } catch (error) {
-        res.status(500).send("Error fetching historical data");
-    }
+		const eventId = req.params.eventId;
+		const pilotName = req.params.pilotName;
+		const races = await Race.find({ eventId: eventId, pilotName: pilotName });
+		res.json(races.map(createHeatList));
+	} catch (error) {
+		res.status(500).send("Error fetching historical data");
+	}
 });
 
 eventRouter.get("/list-pilots/:eventId", async (req: Request, res: Response) => {
@@ -111,7 +111,7 @@ eventRouter.delete("/delete-race/:raceId", Auth.byToken, async (req: RequestPlus
 	const race = await Race.findById(req.params.raceId);
 	if (!race) {
 		res.status(404).send();
-        return;
+		return;
 	}
 
 	const deleteResult = await race.deleteOne();
@@ -121,7 +121,7 @@ eventRouter.delete("/delete-race/:raceId", Auth.byToken, async (req: RequestPlus
 	}
 
 	if (race) {
-		if (await Race.decrementHeatNumber(race.pilotName, race.eventId, 1, race.heatNumber)){
+		if (await Race.decrementHeatNumber(race.pilotName, race.eventId, 1, race.heatNumber)) {
 			res.status(200).send("Success");
 		} else {
 			res.status(500).send("Failed");
@@ -131,10 +131,94 @@ eventRouter.delete("/delete-race/:raceId", Auth.byToken, async (req: RequestPlus
 	}
 });
 
-function createHeatList(data: IRaceData){
+eventRouter.get("/heatdata/:eventId/:heatNumber", async (req: Request, res: Response) => {
+	try {
+		const eventId = req.params.eventId;
+		const heatNumber = Number(req.params.heatNumber);
+		let heatData = await Race.findByEventIdAndHeatNumber(eventId, heatNumber, true);
+		heatData.forEach((data) => {
+			data.gateData = data.gateData.sort((a, b) => a.time - b.time);
+		});
+
+		heatData = heatData.sort((a, b) => a.gateData[a.gateData.length - 1].time - b.gateData[b.gateData.length - 1].time);
+
+		res.json(heatData);
+	} catch (error) {
+		res.status(500).send("Error fetching heat data");
+	}
+});
+
+eventRouter.get("/heat/:eventId/:pilotName", async (req: Request, res: Response) => {
+	try {
+		const eventId = req.params.eventId;
+		const pilotName = req.params.pilotName;
+		const heatData = await Race.findByEventIdAndPilotName(eventId, pilotName, true);
+		heatData.forEach((data) => {
+			data.gateData = data.gateData.sort((a, b) => a.time - b.time);
+		});
+		res.json(heatData);
+	} catch (error) {
+		res.status(500).send("Error fetching heat data");
+	}
+});
+
+eventRouter.get("/bestPossible/:eventId/:pilotName", async (req: Request, res: Response) => {
+	try {
+		const eventId = req.params.eventId;
+		const pilotName = req.params.pilotName;
+		const heatData = await Race.findByEventIdAndPilotName(eventId, pilotName, true);
+		heatData.forEach((data) => {
+			data.gateData = data.gateData.sort((a, b) => a.time - b.time);
+		});
+
+		const fastestData = heatData.reduce((prev, curr) => { return prev.gateData[prev.gateData.length - 1].time < curr.gateData[curr.gateData.length - 1].time ? prev : curr; });
+		fastestData.pilotName += " (best)";
+
+		const idealRace = heatData[0].cloneRace();
+		idealRace.pilotName = idealRace.pilotName += " (Ideal)";
+		idealRace.gateData = findBestRace(heatData) ?? [];
+		idealRace.heatNumber = -1;
+
+		heatData.push(idealRace);
+
+		res.json(heatData);
+	} catch (error) {
+		res.status(500).send("Error fetching heat data");
+	}
+});
+
+function findBestRace(races: IRaceData[]): IGateDataWithDelta[] | null {
+	if (!races || races.length === 0) {
+		return null;
+	}
+
+	const bestRaceMap = new Map<string, IGateDataWithDelta>();
+
+	races.forEach(race => {
+		race.gateData.forEach((gate, index) => {
+			const delta = index === 0 ? gate.time : gate.time - race.gateData[index - 1].time;
+			const key = `Lap${gate.lap}-Gate${gate.gate}`;
+
+			const bestDelta = bestRaceMap.get(key);
+			if (!bestDelta || (delta < bestDelta.delta)) {
+				bestRaceMap.set(key, { ...gate, delta });
+			}
+		});
+	});
+
+	let cumulativeTime = 0;
+	const bestRace = Array.from(bestRaceMap.values()).map(gate => {
+		cumulativeTime += gate.delta;
+		return { ...gate, time: cumulativeTime };
+	});
+
+	return bestRace;
+}
+
+function createHeatList(data: IRaceData) {
 	return {
 		heat: data.heatNumber,
-        time: data.gateData[data.gateData.length - 1].time,
+		time: data.gateData[data.gateData.length - 1].time,
 		_id: data._id
 	};
 }

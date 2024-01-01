@@ -4,7 +4,11 @@ export interface IGateData {
     position: number;
     lap: number;
     gate: number;
-    time: number
+    time: number;
+}
+
+export interface IGateDataWithDelta extends IGateData {
+    delta: number;
 }
 
 export interface IRaceData extends Document {
@@ -101,6 +105,22 @@ class Race extends RaceData {
         return race;
     }
 
+    cloneRace(
+    ): Race {
+        const race = new Race();
+        race.pilotName = this.pilotName;
+        race.finished = this.finished;
+        race.aborted = this.aborted;
+        race.colour = this.colour;
+        race.heatDateTime = this.heatDateTime;
+        race.heatNumber = this.heatNumber;
+        race.points = this.points;
+        race.eventId = this.eventId;
+        race.hostId = this.hostId;
+        race.gateData = this.gateData;
+        return race;
+    }
+
     static async getByPilotName(pilotName: string): Promise<Race[]> {
         return (await this.find({ pilotName: pilotName })) as Race[];
     }
@@ -129,6 +149,15 @@ class Race extends RaceData {
         }
         else {
             return await this.find({ eventId: eventId, hostId: hostId, finished: finished, aborted: aborted });
+        }
+    }
+
+    static async findByEventIdAndPilotName(eventId: string, pilotName: string, finished?: boolean, aborted: boolean = false): Promise<Race[]> {
+        if (finished === undefined) {
+            return await this.find({ eventId: eventId, pilotName: pilotName, aborted: aborted });
+        }
+        else {
+            return await this.find({ eventId: eventId, pilotName: pilotName, finished: finished, aborted: aborted });
         }
     }
 
