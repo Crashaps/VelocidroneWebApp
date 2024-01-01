@@ -41,7 +41,7 @@ eventRouter.get("/current-finish-times/:eventId", async (req: Request, res: Resp
 	try {
 		const eventId = req.params.eventId;
 
-		const raceData = await Race.findByEventId(eventId);
+		const raceData = await Race.findByEventId(eventId, true);
 
 		const pilotFinishTimes: RaceFinishTimes[] = [];
 
