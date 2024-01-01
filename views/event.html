@@ -203,10 +203,19 @@
                     else {
                         return 0;
                     }
-
                 });
 
             } else {
+                let color = data.colour;
+
+                while (raceChart.data.datasets.find(ds => ds.color === color) != null) {
+                    const rgb = hexToRgb(color);
+                    const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+                    hsl.h = hsl.h < 0.5 ? hsl.h * 1.3 : hsl.h * 0.8;
+                    const newRgb = hslToRgb(hsl.h, hsl.s, hsl.l);
+                    color = rgbToHex(newRgb.r, newRgb.g, newRgb.b);
+                }
+
                 raceChart.data.datasets.push({
                     label: data.pilotName,
                     data: [
@@ -218,7 +227,7 @@
                             y: data.gateData[data.gateData.length - 1].time,
                         },
                     ],
-                    borderColor: data.colour,
+                    borderColor: color,
                     fill: false,
                 });
             }
