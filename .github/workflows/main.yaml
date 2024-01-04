@@ -30,7 +30,7 @@ jobs:
         echo '{ "mongodb": "${{secrets.MONGODB}}", "JWTKey": "${{secrets.JWTKEY}}", "smtpPassword" : "${{secrets.SMTPPASSWORD}}", "smtpUsername" : "${{secrets.SMTPUSERNAME}}", "smtpPort" : ${{secrets.SMTPPORT}}, "smtpHost" : "${{secrets.SMTPHOST}}", "smtpFrom" : "${{secrets.SMTPFROM}}", "smtpSecure" : ${{secrets.SMTPSECURE}} }' > ./build/settings.json
 
     - name: FTP Files to Server
-      uses: SamKirkland/FTP-Deploy-Action@4.0.0
+      uses: SamKirkland/FTP-Deploy-Action@4.3.4
       with:
         server: ${{secrets.SSH_SERVER}}
         username: ${{ secrets.SSH_USERNAME }}
