@@ -1,4 +1,9 @@
 {
     "mongodb": "mongodb://localhost:27017",
-    "JWTKey": ""
+    "JWTKey": "",
+    "smtpPassword": "",
+    "smtpUsername": "",
+    "smtpPort": 465,
+    "smtpHost": "",
+    "smtpSecure": true
 }

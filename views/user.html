@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>User</title>
+    <link rel="stylesheet" href="css/layout.css">
+</head>
+
+<body>
+    <div class="titlebar">
+        <div class="topnav">
+            <a href="index">Home</a>
+            <a href="event">Current Event</a>
+            <a href="historical">Historical Data</a>
+            <a href="login" style="float:right">Login</a>
+            <a class="active" href="user" style="float:right">User</a>
+            <a href="admin" style="float:right">Admin</a>
+        </div>
+    </div>
+    <div id="userDetails" class="section">
+        <div>
+            <p id="username"></p>
+            <p id="email"></p>
+            <p id="ApiKey"></p>
+            <button id="generateApiKey">Generate ApiKey</button>
+            <button id="logout">Logout</button>
+        </div>
+    </div>
+    <div id="userInvite" class="section">
+        <form id="inviteForm">
+            <input type="email" id="inviteEmail" placeholder="email" required>
+            <button type="submit">Invite</button>
+        </form>
+    </div>
+    <script>
+        window.onload = function () {
+            const token = localStorage.getItem('token');
+            if (token) {
+                fetch('/userdetails', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('username').innerHTML = data.username;
+                        document.getElementById('email').innerHTML = data.email;
+                        document.getElementById('ApiKey').innerHTML = data.apiKey;
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+            document.getElementById('inviteForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const email = document.getElementById('inviteEmail').value;
+                fetch('/invite', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    },
+                    body: JSON.stringify({ email })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.message) {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
+
+            document.getElementById('logout').addEventListener('click', function (e) {
+                e.preventDefault();
+                localStorage.removeItem('token');
+                window.location.reload();
+            });
+
+            document.getElementById('generateApiKey').addEventListener('click', function (e) {
+                e.preventDefault();
+                fetch('/generateApiKey', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data && data.apiKey) {
+                            document.getElementById('ApiKey').innerHTML = data.apiKey;
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            });
+        }
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Register</title>
+    <link rel="stylesheet" href="css/layout.css">
+</head>
+
+<body>
+    <div class="titlebar">
+        <div class="topnav">
+            <a href="index">Home</a>
+            <a href="event">Current Event</a>
+            <a href="historical">Historical Data</a>
+            <a href="login" style="float:right">Login</a>
+            <a href="user" style="float:right">User</a>
+            <a href="admin" style="float:right">Admin</a>
+        </div>
+    </div>
+    <div class="section">
+        <div>
+            <h2>Login</h2>
+            <form id="loginForm">
+                <input type="text" id="username" placeholder="Username" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <input type="password" id="passwordComf" placeholder="Comfirm Password" required>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    </div>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const passwordComf = document.getElementById('passwordComf').value;
+
+            if (!username || !password || !passwordComf) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            if (password !== passwordComf) {
+                alert('Passwords do not match!');
+                return;
+            }
+
+            const query = new URLSearchParams(window.location.search);
+
+            const ref = query.get('ref');
+
+            if (ref == null) {
+                alert('No reference found');
+            }
+
+            fetch('/accept', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': ref
+                },
+                body: JSON.stringify({ username, password })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.token) {
+                        localStorage.setItem('token', data.token);
+                        alert('Logged in successfully')
+                    } else {
+                        // Handle login failure
+                        alert('Login failed!');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        });
+    </script>
+</body>
+
+</html>

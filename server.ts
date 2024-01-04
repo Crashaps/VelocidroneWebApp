@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import http from "http";
 import fs from "fs";
 import { Server as SocketIOServer } from "socket.io";
+import EmailSenderHolder from "./models/emailSender";
 
 const app: Application = express();
 const server = http.createServer(app);
@@ -19,6 +20,8 @@ import eventRouter from "./routers/event";
 import RequestPlus from "./models/RequestPlus";
 
 const settings = JSON.parse(fs.readFileSync("./settings.json", "utf-8"));
+
+EmailSenderHolder.initSender(settings.smtpHost, settings.smtpPort, settings.smtpSecure, settings.smtpUsername, settings.smtpPassword, settings.smtpFrom);
 
 mongoose.connect(settings.mongodb);
 

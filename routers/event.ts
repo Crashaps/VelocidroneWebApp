@@ -35,6 +35,44 @@ eventRouter.post("/create-event", Auth.byToken, async (req: RequestPlus, res: Re
 	const event = Event.createEvent(req.body.name, new Date(Date.now()), new Date(req.body.eventStartDate), req.body.heatCount, [req.user._id], false, true);
 
 	await event.save();
+
+	res.json(event);
+});
+
+eventRouter.get("/event/:id", Auth.byToken, async (req: RequestPlus, res: Response) => {
+	if (!req.user) {
+		res.status(401).send();
+		return;
+	}
+
+	const event = await Event.findById(req.params.id);
+	
+	if (!event) {
+		res.status(404).send();
+		return;
+	}
+
+	res.json(event);
+});
+
+eventRouter.put("/enable-event/:id", Auth.byToken, async (req: RequestPlus, res: Response) => {
+	if (!req.user) {
+        res.status(401).send();
+        return;
+    }
+
+    const event = await Event.findById(req.params.id);
+
+    if (!event) {
+        res.status(404).send();
+        return;
+    }
+
+    event.active = !event.active;
+
+    await event.save();
+
+    res.json(event);
 });
 
 eventRouter.get("/current-finish-times/:eventId", async (req: Request, res: Response) => {

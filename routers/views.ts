@@ -27,4 +27,8 @@ viewRouter.get("/admin", (req: Request, res: Response) => {
   res.sendFile( path.parse(__dirname).dir + "/views/admin.html");
 });
 
+viewRouter.get("/user", (req: Request, res: Response) => {
+  res.sendFile( path.parse(__dirname).dir + "/views/user.html");
+});
+
 export default viewRouter;

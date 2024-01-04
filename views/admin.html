@@ -17,13 +17,14 @@
 <body>
     <div class="titlebar">
         <div class="topnav">
-          <a href="index">Home</a>
-          <a href="event">Current Event</a>
-          <a href="historical">Historical Data</a>
-          <a href="login" style="float:right">Login</a>
-          <a class="active" href="admin" style="float:right">Admin</a>
+            <a href="index">Home</a>
+            <a href="event">Current Event</a>
+            <a href="historical">Historical Data</a>
+            <a href="login" style="float:right">Login</a>
+            <a href="user" style="float:right">User</a>
+            <a class="active" href="admin" style="float:right">Admin</a>
         </div>
-      </div>
+    </div>
     <div class="form-section">
         <h2>Create New Event</h2>
         <form id="createEventForm">
@@ -40,19 +41,24 @@
         </form>
     </div>
 
-    <div class="dropdown-section">
+    <div class="flex-container">
         <label for="eventDropdown">Select Event:</label>
         <select id="eventDropdown">
             <option value="">--Select an Event--</option>
             <!-- Event options will be populated here -->
         </select>
+        <div>
+            <p id="eventEnabledStatus"></p>
+            <button id="enableEvent"></button>
+        </div>
     </div>
 
-    <div class="dropdown-section">
+    <div>
         <label for="eventPilotDropdown">Select Pilot:</label>
         <select id="eventPilotDropdown">
             <option value="">--Select a Pilot--</option>
         </select>
+
     </div>
 
     <div id="pilotRaceContainer">
@@ -92,7 +98,13 @@
                     body: JSON.stringify(eventData),
                     headers: { 'Content-Type': 'application/json', 'Authorization': token }
                 }).then(response => response.json())
-                    .then(data => console.log(data))
+                    .then(data => {
+                        const dropdown = document.getElementById("eventDropdown");
+                        const option = document.createElement("option");
+                        option.value = `${data._id}`;
+                        option.textContent = `${data.name}`;
+                        dropdown.appendChild(option);
+                    })
                     .catch(error => console.error('Error:', error));
             });
 
@@ -119,8 +131,43 @@
                     if (eventId) {
                         document.eventId = eventId;
                         loadPilots(eventId);
+
+                        const token = localStorage.getItem("token");
+
+                        fetch("/event/" + eventId, {
+                            method: 'GET',
+                            headers: { 'Authorization': token }
+                        })
+                            .then((response) => response.json())
+                            .then((event) => {
+                                const eventStatus = document.getElementById("eventEnabledStatus");
+                                const eventEnableButton = document.getElementById("enableEvent");
+
+                                eventStatus.textContent = event.active ? "Enabled" : "Disabled";
+                                eventEnableButton.textContent = event.active ? "Disable" : "Enable";
+                            })
+                            .catch((error) => console.error("Error:", error));
                     }
                 });
+
+            document.getElementById("enableEvent").addEventListener("click", function () {
+                const token = localStorage.getItem("token");
+                if (!token) {
+                    alert("You must be logged in to enable an event.");
+                    return;
+                }
+
+                fetch("/enable-event/" + document.eventId, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': token }
+                }).then(response => response.json())
+                    .then(data => {
+                        const eventStatus = document.getElementById("eventEnabledStatus");
+                        const eventEnableButton = document.getElementById("enableEvent");
+                        eventStatus.textContent = data.active ? "Enabled" : "Disabled";
+                        eventEnableButton.textContent = data.active ? "Disable" : "Enable";
+                    });
+            });
 
             document
                 .getElementById("eventPilotDropdown")
@@ -134,6 +181,10 @@
                         loadPilotRaces(eventId, selectedPilotName);
                     }
                 });
+
+        }
+
+        function enableEvent(event) {
 
         }
 
