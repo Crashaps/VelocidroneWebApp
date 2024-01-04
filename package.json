@@ -4,7 +4,7 @@
   "description": "",
   "scripts": {
     "start": "node server.js",
-    "build": "tsc --outDir ./build && npm run copyPublic && npm run copyViews && npm run copyPackageJson && npm run copySettingsJson",
+    "build": "tsc --outDir ./build && npm run copyPublic && npm run copyViews && npm run copyPackageJson",
     "copyPublic": "xcopy .\\public .\\build\\public\\ /s /e /y",
     "copyViews": "xcopy .\\views .\\build\\views\\ /s /e /y",
     "copyPackageJson": "copy .\\package.json .\\build\\package.json",
