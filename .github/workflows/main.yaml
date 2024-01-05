@@ -64,6 +64,10 @@ jobs:
       run: |
         ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent/ && rm -r myproject/ && mv newbuild myproject"
 
+    - name: NPM Install on Server
+      run: |
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent/myproject && source scl_source enable nodejs20 && npm install"
+
     - name: Start Remote Server
       run: |
         ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent/ && ./start"
