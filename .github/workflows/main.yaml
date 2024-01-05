@@ -39,14 +39,14 @@ jobs:
         $sshDir = "$env:USERPROFILE\.ssh"
         $privateKeyFile = "$sshDir\id_rsa"
         New-Item -ItemType Directory -Force -Path $sshDir
-        Set-Content -Path $privateKeyFile -Value "$env:SSH_PRIVATE_KEY"
+        Set-Content -Path $privateKeyFile -Value $env:SSH_PRIVATE_KEY
         & icacls.exe $privateKeyFile /inheritance:r /grant:r "$($env:USERNAME):R"
-        Set-Content -Path "$sshDir\config" -Value @"
+        @"
         Host ${{ secrets.SSH_SERVER }}
-          IdentityFile $privateKeyFile
-          User ${{ secrets.SSH_USERNAME }}
-          StrictHostKeyChecking no
-"@
+            IdentityFile $privateKeyFile
+            User ${{ secrets.SSH_USERNAME }}
+            StrictHostKeyChecking no
+        "@ | Set-Content -Path "$sshDir\config"
 
     - name: Ensure Remote Directory Exists
       run: |
