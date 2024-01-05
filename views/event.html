@@ -274,7 +274,7 @@
 
             resetReplays();
 
-            fetch(`/heat/${document.currentEventHost.split("|")[0]}/${pilotName}`)
+            fetch(`/heat/${document.currentEventHost.split("|")[0]}/${encodeURIComponent(pilotName)}`)
                 .then((response) => response.json())
                 .then((data) => {
                     data.forEach((item, index) => {
@@ -302,7 +302,7 @@
 
             resetReplays();
 
-            fetch(`/bestPossible/${document.currentEventHost.split("|")[0]}/${pilotName}`)
+            fetch(`/bestPossible/${document.currentEventHost.split("|")[0]}/${encodeURIComponent(pilotName)}`)
                 .then((response) => response.json())
                 .then((data) => {
                     const colors = createRainbowDiv(0, data.length);
@@ -330,7 +330,7 @@
 
             resetReplays();
 
-            fetch(`/heat/${document.currentEventHost.split("|")[0]}/${pilotName}`)
+            fetch(`/heat/${document.currentEventHost.split("|")[0]}/${encodeURIComponent(pilotName)}`)
                 .then((response) => response.json())
                 .then((data) => {
 
@@ -383,6 +383,14 @@
 
         function addTimeToTable(data) {
             var pilotRow = getRowByPilotName(data.pilotName);
+
+            if (pilotRow == null) {
+                const tableBody = document.getElementById("finishTimesBody");
+                pilotRow = tableBody.insertRow();
+                let pilotNameCell = pilotRow.insertCell(0);
+                pilotNameCell.innerHTML = `<a onclick="replayPilotBest('${item.pilotName}')">${item.pilotName} </a>`;
+            }
+
             var cell = pilotRow.insertCell();
             cell.textContent = data.time;
 
@@ -390,7 +398,7 @@
             var columnCount = tableHead.rows[0].cells.length - 1;
             if (pilotRow.cells.length > tableHead.rows[0].cells.length) {
                 let newHeader = tableHead.rows[0].insertCell();
-                newHeader.outerHTML = `<th>Race ${pilotRow.cells.length - 1}</th>`;
+                newHeader.outerHTML = `<th><a onclick="replay(${pilotRow.cells.length - 1})">Race ${pilotRow.cells.length - 1}</a></th>`;
             }
         }
 
