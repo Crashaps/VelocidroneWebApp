@@ -46,7 +46,7 @@ jobs:
           IdentityFile $privateKeyFile
           User ${{ secrets.SSH_USERNAME }}
           StrictHostKeyChecking no
-          "@
+"@
 
     - name: Ensure Remote Directory Exists
       run: |
