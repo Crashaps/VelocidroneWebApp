@@ -8,7 +8,6 @@ on:
 jobs:
   build-and-deploy:
     runs-on: windows-latest
-    environment: test
 
     steps:
     - name: Checkout Repository
@@ -27,27 +26,43 @@ jobs:
 
     - name: Create settings.json File
       run: |
-        echo '{ "mongodb": "${{ secrets.MONGODB }}", "JWTKey": "${{ secrets.JWTKEY }}", "smtpPassword" : "${{ secrets.SMTPPASSWORD }}", "smtpUsername" : "${{ secrets.SMTPUSERNAME }}", "smtpPort" : ${{ secrets.SMTPPORT }}, "smtpHost" : "${{ secrets.SMTPHOST }}", "smtpFrom" : "${{ secrets.SMTPFROM }}", "smtpSecure" : ${{ secrets.SMTPSECURE }} }' > ./build/settings.json
-
-    - name: Install OpenSSH Client (Windows)
-      run: Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
-
-    - name: Ensure Remote Directory Exists
-      env:
-        SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
-        SSH_SERVER: ${{ secrets.SSH_SERVER }}
-        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
-      run: |
-        $password = ConvertTo-SecureString $env:SSH_PASSWORD -AsPlainText -Force
-        $credential = New-Object System.Management.Automation.PSCredential ($env:SSH_USERNAME, $password)
-        ssh -v $env:SSH_USERNAME@$env:SSH_SERVER -pw $credential.GetNetworkCredential().Password "mkdir -p /home/crash/apps/velocevent/newbuild/"
+        $settings = @{
+          mongodb = "${{ secrets.MONGODB }}"
+          JWTKey = "${{ secrets.JWTKEY }}"
+          smtpPassword = "${{ secrets.SMTPPASSWORD }}"
+          smtpUsername = "${{ secrets.SMTPUSERNAME }}"
+          smtpPort = ${{ secrets.SMTPPORT }}
+          smtpHost = "${{ secrets.SMTPHOST }}"
+          smtpFrom = "${{ secrets.SMTPFROM }}"
+          smtpSecure = ${{ secrets.SMTPSECURE }}
+        } | ConvertTo-Json -Compress
+        Set-Content -Path ./build/settings.json -Value $settings
 
     - name: Deploy Files to Server via SCP
       env:
-        SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         SSH_SERVER: ${{ secrets.SSH_SERVER }}
-        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
+        SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+        REMOTE_DIR: /home/crash/apps/velocevent/newbuild/
       run: |
-        $password = ConvertTo-SecureString $env:SSH_PASSWORD -AsPlainText -Force
-        $credential = New-Object System.Management.Automation.PSCredential ($env:SSH_USERNAME, $password)
-        scp -v -o ConnectTimeout=60 -pw $credential.GetNetworkCredential().Password -r .\build\* $env:SSH_USERNAME@$env:SSH_SERVER:/home/crash/apps/velocevent/newbuild/
+        # Install OpenSSH if it's not already
+        Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
+    
+        # Setup SSH Key
+        $sshDir = "$env:USERPROFILE\.ssh"
+        $privateKeyFile = "$sshDir\id_rsa"
+        New-Item -ItemType Directory -Force -Path $sshDir
+        $env:SSH_PRIVATE_KEY | Out-File -FilePath $privateKeyFile -Encoding ascii
+        & icacls.exe $privateKeyFile /inheritance:r /grant:r "$($env:USERNAME):R"
+        @"
+        Host $env:SSH_SERVER
+            User $env:SSH_USERNAME
+            IdentityFile $privateKeyFile
+            StrictHostKeyChecking no
+        "@ | Set-Content -Path "$sshDir\config"
+    
+        # Ensure Remote Directory Exists
+        ssh $env:SSH_USERNAME@$env:SSH_SERVER "mkdir -p $env:REMOTE_DIR"
+    
+        # SCP Files to Remote Directory
+        scp -o ConnectTimeout=60 -r .\build\* $env:SSH_USERNAME@$env:SSH_SERVER:"$env:REMOTE_DIR"
