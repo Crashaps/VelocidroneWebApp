@@ -27,7 +27,7 @@ jobs:
 
     - name: Create settings.json File
       run: |
-        echo '{ "mongodb": "${{secrets.MONGODB}}", "JWTKey": "${{secrets.JWTKEY}}", "smtpPassword" : "${{secrets.SMTPPASSWORD}}", "smtpUsername" : "${{secrets.SMTPUSERNAME}}", "smtpPort" : ${{secrets.SMTPPORT}}, "smtpHost" : "${{secrets.SMTPHOST}}", "smtpFrom" : "${{secrets.SMTPFROM}}", "smtpSecure" : ${{secrets.SMTPSECURE}} }' > ./build/settings.json
+        echo '{ "serverPort": ${{secrets.SERVERPORT}}, "mongodb": "${{secrets.MONGODB}}", "JWTKey": "${{secrets.JWTKEY}}", "smtpPassword" : "${{secrets.SMTPPASSWORD}}", "smtpUsername" : "${{secrets.SMTPUSERNAME}}", "smtpPort" : ${{secrets.SMTPPORT}}, "smtpHost" : "${{secrets.SMTPHOST}}", "smtpFrom" : "${{secrets.SMTPFROM}}", "smtpSecure" : ${{secrets.SMTPSECURE}} }' > ./build/settings.json
 
     - name: Install OpenSSH Client (Windows)
       run: Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0

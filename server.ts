@@ -38,8 +38,8 @@ app.use(raceApi);
 app.use(userRouter);
 app.use(eventRouter);
 
-server.listen(3000, () => {
-    console.log("Server running on port 3000");
+server.listen(settings.serverPort, () => {
+    console.log(`Server running on port ${settings.serverPort}`);
 });
 
 io.on("connection", function (socket) {
