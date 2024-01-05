@@ -3,12 +3,12 @@ name: Deploy TypeScript Project
 on:
   push:
     branches:
-      - main
+      - short
 
 jobs:
   build-and-deploy:
     runs-on: windows-latest
-    environment: test
+    environment: short
 
     steps:
     - name: Checkout Repository
@@ -50,20 +50,20 @@ jobs:
     
     - name: Ensure Remote Directory Exists
       run: |
-        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "mkdir -p /home/crash/apps/velocevent/newbuild/"
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "mkdir -p /home/crash/apps/velocevent-short/newbuild/"
 
     - name: Deploy Files to Server via SCP
       run: |
-        scp -o ConnectTimeout=60 -r .\build\* ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }}:/home/crash/apps/velocevent/newbuild/
+        scp -o ConnectTimeout=60 -r .\build\* ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }}:/home/crash/apps/velocevent-short/newbuild/
     
     - name: NPM Install on Server
       run: |
-        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent/newbuild && source scl_source enable nodejs20 && npm install"
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent-short/newbuild && source scl_source enable nodejs20 && npm install"
 
     - name: Stop, Remove old, Move new, Start
       run: |
-        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent/ && ./stop && rm -r myproject/ && mv newbuild myproject && ./start"
-        
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent-short/ && ./stop && rm -r myproject/ && mv newbuild myproject && ./start"
+
     - name: Delete SSH Key
       run: |
         del "$env:USERPROFILE\.ssh\id_rsa"
