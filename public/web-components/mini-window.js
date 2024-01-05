@@ -62,8 +62,8 @@ class MiniWindow extends HTMLElement {
         if (position) {
             this.style.left = position.left;
             this.style.top = position.top;
-            this.style.width = position.width == null ? this.offsetWidth : position.width;
-            this.style.height = position.height == null ? this.offsetHeight : position.height;
+            this.style.width = position.width == null ? 0 : position.width;
+            this.style.height = position.height == null ? 0 : position.height;
         }
     }
 
