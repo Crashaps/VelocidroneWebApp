@@ -60,14 +60,7 @@ jobs:
       run: |
         ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent/newbuild && source scl_source enable nodejs20 && npm install"
 
-    - name: Stop Remote Server
+    - name: Stop, Remove old, Move new, Start
       run: |
-        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent/ && ./stop"
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent/ && ./stop && rm -r myproject/ && mv newbuild myproject && ./start"
     
-    - name: Remove Old Files, Move New
-      run: |
-        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent/ && rm -r myproject/ && mv newbuild myproject"
-  
-    - name: Start Remote Server
-      run: |
-        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent/ && ./start"
