@@ -388,7 +388,7 @@
                 const tableBody = document.getElementById("finishTimesBody");
                 pilotRow = tableBody.insertRow();
                 let pilotNameCell = pilotRow.insertCell(0);
-                pilotNameCell.innerHTML = `<a onclick="replayPilotBest('${item.pilotName}')">${item.pilotName} </a>`;
+                pilotNameCell.innerHTML = `<a onclick="replayPilotBest('${data.pilotName}')">${data.pilotName} </a>`;
             }
 
             var cell = pilotRow.insertCell();
