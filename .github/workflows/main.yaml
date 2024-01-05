@@ -29,44 +29,28 @@ jobs:
       run: |
         echo '{ "mongodb": "${{secrets.MONGODB}}", "JWTKey": "${{secrets.JWTKEY}}", "smtpPassword" : "${{secrets.SMTPPASSWORD}}", "smtpUsername" : "${{secrets.SMTPUSERNAME}}", "smtpPort" : ${{secrets.SMTPPORT}}, "smtpHost" : "${{secrets.SMTPHOST}}", "smtpFrom" : "${{secrets.SMTPFROM}}", "smtpSecure" : ${{secrets.SMTPSECURE}} }' > ./build/settings.json
 
-    - name: Deploy Files to Server via SCP
+    - name: Install OpenSSH Client (Windows)
+      run: Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
+
+    - name: Setup SSH Key
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        SSH_SERVER: ${{ secrets.SSH_SERVER }}
-        SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
-        SSH_PORT: 22 # Update with your server's SSH port if it's not the default
-        REMOTE_DIR: /home/crash/apps/velocevent/newbuild/
       run: |
-        # Install OpenSSH if it's not already
-        Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
-    
-        # Set up SSH Key and SSH Config
         $sshDir = "$env:USERPROFILE\.ssh"
         $privateKeyFile = "$sshDir\id_rsa"
         New-Item -ItemType Directory -Force -Path $sshDir
-        $env:SSH_PRIVATE_KEY | Out-File -FilePath $privateKeyFile -Encoding ascii
-        Set-Content -Path "$sshDir\config" -Value "Host $env:SSH_SERVER `n  IdentityFile $privateKeyFile `n  Port $env:SSH_PORT `n  User $env:SSH_USERNAME `n  StrictHostKeyChecking no"
+        Set-Content -Path $privateKeyFile -Value "$env:SSH_PRIVATE_KEY"
         & icacls.exe $privateKeyFile /inheritance:r /grant:r "$($env:USERNAME):R"
-    
-        # Execute SCP Command to Transfer Files
-        scp -o ConnectTimeout=60 -r .\build\* $env:SSH_USERNAME@$env:SSH_SERVER:"$env:REMOTE_DIR"
-    
-    - name: SSH Key Setup
-      uses: webfactory/ssh-agent@v0.5.0
-      with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+        Set-Content -Path "$sshDir\config" -Value @"
+        Host ${{ secrets.SSH_SERVER }}
+          IdentityFile $privateKeyFile
+          User ${{ secrets.SSH_USERNAME }}
+          StrictHostKeyChecking no"@
 
-    - name: SSH to Server and Stop Server
+    - name: Ensure Remote Directory Exists
       run: |
-        ssh -T ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} << 'ENDSSH'
-        cd /home/crash/apps/velocevent/
-        ./stop
-        ENDSSH
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "mkdir -p /home/crash/apps/velocevent/newbuild/"
 
-    - name: Run Start Script on Server
+    - name: Deploy Files to Server via SCP
       run: |
-        ssh -T ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} << 'ENDSSH'
-        cd /home/crash/apps/velocevent/
-        ./start
-        ENDSSH
-
+        scp -o ConnectTimeout=60 -r .\build\* ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }}:/home/crash/apps/velocevent/newbuild/
