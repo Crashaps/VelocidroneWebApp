@@ -50,7 +50,7 @@ jobs:
 
     - name: Ensure Remote Directory Exists
       run: |
-        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "mkdir -p /home/crash/apps/velocevent/newbuild/"
+        ssh -v ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "mkdir -p /home/crash/apps/velocevent/newbuild/"
 
     - name: Deploy Files to Server via SCP
       run: |
