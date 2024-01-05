@@ -27,31 +27,27 @@ jobs:
 
     - name: Create settings.json File
       run: |
-        echo '{ "mongodb": "${{secrets.MONGODB}}", "JWTKey": "${{secrets.JWTKEY}}", "smtpPassword" : "${{secrets.SMTPPASSWORD}}", "smtpUsername" : "${{secrets.SMTPUSERNAME}}", "smtpPort" : ${{secrets.SMTPPORT}}, "smtpHost" : "${{secrets.SMTPHOST}}", "smtpFrom" : "${{secrets.SMTPFROM}}", "smtpSecure" : ${{secrets.SMTPSECURE}} }' > ./build/settings.json
+        echo '{ "mongodb": "${{ secrets.MONGODB }}", "JWTKey": "${{ secrets.JWTKEY }}", "smtpPassword" : "${{ secrets.SMTPPASSWORD }}", "smtpUsername" : "${{ secrets.SMTPUSERNAME }}", "smtpPort" : ${{ secrets.SMTPPORT }}, "smtpHost" : "${{ secrets.SMTPHOST }}", "smtpFrom" : "${{ secrets.SMTPFROM }}", "smtpSecure" : ${{ secrets.SMTPSECURE }} }' > ./build/settings.json
 
     - name: Install OpenSSH Client (Windows)
       run: Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
 
-    - name: Setup SSH Key
-      env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-      run: |
-        $sshDir = "$env:USERPROFILE\.ssh"
-        $privateKeyFile = "$sshDir\id_rsa"
-        New-Item -ItemType Directory -Force -Path $sshDir
-        Set-Content -Path $privateKeyFile -Value $env:SSH_PRIVATE_KEY
-        & icacls.exe $privateKeyFile /inheritance:r /grant:r "$($env:USERNAME):R"
-        @"
-        Host ${{ secrets.SSH_SERVER }}
-            IdentityFile $privateKeyFile
-            User ${{ secrets.SSH_USERNAME }}
-            StrictHostKeyChecking no
-        "@ | Set-Content -Path "$sshDir\config"
-
     - name: Ensure Remote Directory Exists
+      env:
+        SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+        SSH_SERVER: ${{ secrets.SSH_SERVER }}
+        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       run: |
-        ssh -v ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "mkdir -p /home/crash/apps/velocevent/newbuild/"
+        $password = ConvertTo-SecureString $env:SSH_PASSWORD -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential ($env:SSH_USERNAME, $password)
+        ssh -v $env:SSH_USERNAME@$env:SSH_SERVER -pw $credential.GetNetworkCredential().Password "mkdir -p /home/crash/apps/velocevent/newbuild/"
 
     - name: Deploy Files to Server via SCP
+      env:
+        SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
+        SSH_SERVER: ${{ secrets.SSH_SERVER }}
+        SSH_PASSWORD: ${{ secrets.SSH_PASSWORD }}
       run: |
-        scp -o ConnectTimeout=60 -r .\build\* ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }}:/home/crash/apps/velocevent/newbuild/
+        $password = ConvertTo-SecureString $env:SSH_PASSWORD -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential ($env:SSH_USERNAME, $password)
+        scp -v -o ConnectTimeout=60 -pw $credential.GetNetworkCredential().Password -r .\build\* $env:SSH_USERNAME@$env:SSH_SERVER:/home/crash/apps/velocevent/newbuild/
