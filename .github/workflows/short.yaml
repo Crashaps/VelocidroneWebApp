@@ -78,7 +78,7 @@ jobs:
         data: '[{"id": "${{secrets.OPALSTACK_SITE}}", "routes": [{"uri": "/", "app": "${{secrets.OPALSTACK_FAILOVERAPP}}"}]}]'
         
     - name: Wait for Switch Operation
-      run: sleep 2
+      run: sleep 20
 
     - name: NPM Install on Server
       run: |
@@ -89,7 +89,7 @@ jobs:
         ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent-short/ && ./stop && rm -r myproject/ && mv newbuild myproject && ./start"
         
     - name: Wait for Main Server to Warm
-      run: sleep 5
+      run: sleep 2
 
     - name: Switch to Main Application
       uses: fjogeleit/http-request-action@master
@@ -101,7 +101,7 @@ jobs:
         data: '[{"id": "${{secrets.OPALSTACK_SITE}}", "routes": [{"uri": "/", "app": "${{secrets.OPALSTACK_MAINAPP}}"}]}]'
        
     - name: Wait for Switch Operation
-      run: sleep 2
+      run: sleep 20
 
     - name: Stop Failover
       run: |
