@@ -63,7 +63,7 @@ jobs:
         MAINAPP_PORT: ${{ secrets.SERVERPORT}}
         FAILOVER_PORT: ${{ secrets.FAILOVERPORT}}
       run: |
-        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cp -R $env:MAINAPP_PATH/newbuild $env:FAILOVER_PATH/newbuild && sed -i 's/$env:MAINAPP_PORT/$env:FAILOVER_PORT/g' $env:FAILOVER_PATH/newbuild/settings.json && sed -i 's/Home/Home Fail/g' $env:FAILOVER_PATH/newbuild/views/index.html && cd $env:FAILOVER_PATH/newbuild && source scl_source enable nodejs20 && npm install && rm -rf $env:FAILOVER_PATH/myproject && mv $env:FAILOVER_PATH/newbuild $env:FAILOVER_PATH/myproject && cd $env:FAILOVER_PATH && ./start"
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cp -R $env:MAINAPP_PATH/newbuild $env:FAILOVER_PATH/newbuild && sed -i 's/$env:MAINAPP_PORT/$env:FAILOVER_PORT/g' $env:FAILOVER_PATH/newbuild/settings.json && sed -i 's/Home/Home Fail/g' $env:FAILOVER_PATH/newbuild/views/index.html && cd $env:FAILOVER_PATH/newbuild && source scl_source enable nodejs20 && npm install && rm -rf $env:FAILOVER_PATH/myproject && mv $env:FAILOVER_PATH/newbuild $env:FAILOVER_PATH/myproject && cd $env:FAILOVER_PATH && [ -f "./tmp/node.pid" ] && ./stop && ./start || ./start"
   
     - name: Wait for Failover Server to Warm
       run: sleep 5
