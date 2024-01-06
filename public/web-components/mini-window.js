@@ -60,10 +60,15 @@ class MiniWindow extends HTMLElement {
     restorePosition() {
         var position = JSON.parse(localStorage.getItem(this.id));
         if (position) {
-            this.style.left = position.left;
-            this.style.top = position.top;
-            this.style.width = position.width == null ? 0 : position.width;
-            this.style.height = position.height == null ? 0 : position.height;
+            this.style.left = position.left == null ? 0 : position.left > window.innerWidth - 10 ? 0 : position.left;
+            this.style.top = position.top == 0 ? 10 : position.top;
+            this.style.width = position.width == null ? 0 : position.width > window.innerWidth - 10 ? 0 : position.width;
+            this.style.height = position.height == null ? 50 : position.height;
+        } else {
+            this.style.left = 0;
+            this.style.top = 10;
+            this.style.width = 200;
+            this.style.height = 200;
         }
     }
 
