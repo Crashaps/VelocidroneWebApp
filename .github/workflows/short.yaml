@@ -55,7 +55,28 @@ jobs:
     - name: Deploy Files to Server via SCP
       run: |
         scp -o ConnectTimeout=60 -r .\build\* ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }}:/home/crash/apps/velocevent-short/newbuild/
-    
+
+    - name: Prepare Failover Server
+      env:
+        FAILOVER_PATH: /home/crash/apps/velocevent-short-failover
+        MAINAPP_PATH: /home/crash/apps/velocevent-short
+        MAINAPP_PORT: ${{ secrets.SERVERPORT}}
+        FAILOVER_PORT: ${{ secrets.FAILOVERPORT}}
+      run: |
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cp -R $env:MAINAPP_PATH/newbuild $env:FAILOVER_PATH/newbuild && sed -i 's/$env:MAINAPP_PORT/$env:FAILOVER_PORT/g' $env:FAILOVER_PATH/newbuild/settings.json && cd $env:FAILOVER_PATH/newbuild && source scl_source enable nodejs20 && npm install && rm -rf $env:FAILOVER_PATH/myproject && mv $env:FAILOVER_PATH/newbuild $env:FAILOVER_PATH/myproject && cd $env:FAILOVER_PATH && ./start"
+  
+    - name: Switch to Failover Application
+      uses: fjogeleit/http-request-action@master
+      with:
+        url: 'https://my.opalstack.com/api/v1/site/update/'
+        method: 'POST'
+        contentType: 'application/json'
+        customHeaders: '{"Content-Type": "application/json", "Authorization": "Token ${{secrets.OPALSTACK_APIKEY}}"}'
+        data: '[{"id": "${{secrets.OPALSTACK_SITE}}", "routes": [{"uri": "/", "app": "${{secrets.OPALSTACK_FAILOVERAPP}}"}]}]'
+        
+    - name: Wait for Switch Operation
+      run: sleep 2
+
     - name: NPM Install on Server
       run: |
         ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent-short/newbuild && source scl_source enable nodejs20 && npm install"
@@ -63,6 +84,22 @@ jobs:
     - name: Stop, Remove old, Move new, Start
       run: |
         ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent-short/ && ./stop && rm -r myproject/ && mv newbuild myproject && ./start"
+
+    - name: Switch to Main Application
+      uses: fjogeleit/http-request-action@master
+      with:
+        url: 'https://my.opalstack.com/api/v1/site/update/'
+        method: 'POST'
+        contentType: 'application/json'
+        customHeaders: '{"Content-Type": "application/json", "Authorization": "Token ${{secrets.OPALSTACK_APIKEY}}"}'
+        data: '[{"id": "${{secrets.OPALSTACK_SITE}}", "routes": [{"uri": "/", "app": "${{secrets.OPALSTACK_MAINAPP}}"}]}]'
+       
+    - name: Wait for Switch Operation
+      run: sleep 2
+
+    - name: Stop Failover
+      run: |
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent-short-failover/ && ./stop"
 
     - name: Delete SSH Key
       run: |
