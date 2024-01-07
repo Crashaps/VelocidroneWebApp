@@ -101,6 +101,10 @@ window.onload = function () {
         .catch((error) => console.error("Error:", error));
 
     window.addEventListener("beforeunload", () => {
+        Array.from(document.getElementsByClassName("miniwindow")).forEach((el) => {
+            savePosition(el);
+        });
+
         resetReplays();
     });
 
