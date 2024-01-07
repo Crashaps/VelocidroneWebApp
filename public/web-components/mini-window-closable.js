@@ -14,7 +14,9 @@ class CloasableMiniWindow extends MiniWindow {
             position: absolute;
             top: 0;
             right: 0;
-            padding: 8px;
+            width: 25px;
+            height: 25px;
+            padding: 0px;
             background-color: red;
             color: white;
             cursor: pointer;

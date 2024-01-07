@@ -186,6 +186,30 @@ eventRouter.get("/heatdata/:eventId/:heatNumber", async (req: Request, res: Resp
 	}
 });
 
+eventRouter.get("/heatdata/:eventId/:heatNumber/ideal", async (req: Request, res: Response) => {
+	try {
+		const eventId = req.params.eventId;
+		const heatNumber = Number(req.params.heatNumber);
+		let heatData = await Race.findByEventIdAndHeatNumber(eventId, heatNumber, true);
+		heatData.forEach((data) => {
+			data.gateData = data.gateData.sort((a, b) => a.time - b.time);
+		});
+
+		heatData = heatData.sort((a, b) => a.gateData[a.gateData.length - 1].time - b.gateData[b.gateData.length - 1].time);
+
+		const idealRace = heatData[0].cloneRace();
+		idealRace.pilotName = "(Ideal Heat)";
+		idealRace.gateData = findBestRace(heatData) ?? [];
+		idealRace.heatNumber = -1;
+
+		heatData.push(idealRace);
+
+		res.json(heatData);
+	} catch (error) {
+		res.status(500).send("Error fetching heat data");
+	}
+});
+
 eventRouter.get("/heat/:eventId/:pilotName", async (req: Request, res: Response) => {
 	try {
 		const eventId = req.params.eventId;
