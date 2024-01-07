@@ -34,6 +34,16 @@ interact('.miniwindow')
         },
         inertia: false
     })
+    .gesturable({
+        onmove: (event) => {
+            var scale = (parseFloat(this.getAttribute('data-scale')) || 1) * event.scale;
+
+            this.style.transform = `translate(${this.getAttribute('data-x')}px, ${this.getAttribute('data-y')}px) scale(${scale})`;
+
+            this.setAttribute('data-scale', scale);
+            this.setAttribute('data-rotation', rotation);
+        }
+    })
     .on('down', dragStartListener);
 
 function dragMoveListener(event) {
