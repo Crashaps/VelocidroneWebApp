@@ -168,6 +168,12 @@
           }
         }
       });
+
+      window.addEventListener("beforeunload", () => {
+        Array.from(document.getElementsByClassName("miniwindow")).forEach((el) => {
+          savePosition(el);
+        });
+      });
     };
   </script>
 

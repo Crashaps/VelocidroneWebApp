@@ -35,13 +35,23 @@ interact('.miniwindow')
         inertia: false
     })
     .gesturable({
-        onmove: (event) => {
-            var scale = (parseFloat(this.getAttribute('data-scale')) || 1) * event.scale;
-
-            this.style.transform = `translate(${this.getAttribute('data-x')}px, ${this.getAttribute('data-y')}px) scale(${scale})`;
-
+        onstart: (event) => {
+            // Initialize scale factor when the gesture starts
+            const scale = parseFloat(this.getAttribute('data-scale')) || 1;
             this.setAttribute('data-scale', scale);
-            this.setAttribute('data-rotation', rotation);
+        },
+        onmove: (event) => {
+            // Scaling the element
+            const initialScale = parseFloat(this.getAttribute('data-scale')) || 1;
+            const scale = initialScale * event.scale;
+
+            // Apply the scale transformation
+            const x = parseFloat(this.getAttribute('data-x')) || 0;
+            const y = parseFloat(this.getAttribute('data-y')) || 0;
+            this.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+
+            // Update the scale for next movement
+            this.setAttribute('data-scale', scale);
         }
     })
     .on('down', dragStartListener);
