@@ -176,7 +176,7 @@ function fillTimesTable(data) {
     data.forEach((item, index) => {
         let row = tableBody.insertRow();
         let pilotNameCell = row.insertCell(0);
-        pilotNameCell.innerHTML = `<a onclick="replayPilotBest('${item.pilotName}')">${item.pilotName} </a>`;
+        pilotNameCell.innerHTML = `<a class="fingerPointer" onclick="replayPilotBest('${item.pilotName}')">${item.pilotName} </a>`;
 
         item.times.forEach((time) => {
             let timeCell = row.insertCell();
@@ -188,7 +188,7 @@ function fillTimesTable(data) {
         if (columnCount < item.times.length) {
             for (let i = columnCount + 1; i <= item.times.length; i++) {
                 let newHeader = tableHead.rows[0].insertCell();
-                newHeader.outerHTML = `<th><a onclick="replayHeatIdeal(${i})">Race ${i}</a></th>`;
+                newHeader.outerHTML = `<th><a class="fingerPointer" onclick="replayHeatIdeal(${i})">Race ${i}</a></th>`;
             }
         }
     });
@@ -351,7 +351,7 @@ function addTimeToTable(data) {
         const tableBody = document.getElementById("finishTimesBody");
         pilotRow = tableBody.insertRow();
         let pilotNameCell = pilotRow.insertCell(0);
-        pilotNameCell.innerHTML = `<a onclick="replayPilotBest('${data.pilotName}')">${data.pilotName} </a>`;
+        pilotNameCell.innerHTML = `<a class="fingerPointer" onclick="replayPilotBest('${data.pilotName}')">${data.pilotName} </a>`;
     }
 
     var cell = pilotRow.insertCell();
@@ -361,7 +361,7 @@ function addTimeToTable(data) {
     var columnCount = tableHead.rows[0].cells.length - 1;
     if (pilotRow.cells.length > tableHead.rows[0].cells.length) {
         let newHeader = tableHead.rows[0].insertCell();
-        newHeader.outerHTML = `<th><a onclick="replay(${pilotRow.cells.length - 1})">Race ${pilotRow.cells.length - 1}</a></th>`;
+        newHeader.outerHTML = `<th><a class="fingerPointer" onclick="replay(${pilotRow.cells.length - 1})">Race ${pilotRow.cells.length - 1}</a></th>`;
     }
 }
 
