@@ -33,6 +33,19 @@ interact('.miniwindow')
         },
         inertia: false
     })
+    .gesturable({
+        onmove: (event) => {
+            // Scaling the element
+            var scale = (parseFloat(event.target.getAttribute('data-scale')) || 1) * event.scale;
+
+            // Apply the transform
+            event.target.style.transform = `translate(${event.target.getAttribute('data-x')}px, ${event.target.getAttribute('data-y')}px) scale(${scale}) rotate(${rotation}deg)`;
+
+            // Update the data attributes
+            event.target.setAttribute('data-scale', scale);
+            event.target.setAttribute('data-rotation', rotation);
+        },
+    })
     .on('down', dragStartListener);
 
 function dragMoveListener(event) {
