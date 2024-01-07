@@ -17,6 +17,7 @@ interact('.miniwindow')
         listeners: {
             start: dragStartListener,
             move(event) {
+                event.preventDefault();
                 let x = (parseFloat(event.target.getAttribute('data-x')) || 0) + ((event.deltaRect.left) ? event.deltaRect.left : 0);
                 let y = (parseFloat(event.target.getAttribute('data-y')) || 0) + ((event.deltaRect.top) ? event.deltaRect.top : 0);
 
@@ -33,22 +34,10 @@ interact('.miniwindow')
         },
         inertia: false
     })
-    .gesturable({
-        onmove: (event) => {
-            // Scaling the element
-            var scale = (parseFloat(event.target.getAttribute('data-scale')) || 1) * event.scale;
-
-            // Apply the transform
-            event.target.style.transform = `translate(${event.target.getAttribute('data-x')}px, ${event.target.getAttribute('data-y')}px) scale(${scale}) rotate(${rotation}deg)`;
-
-            // Update the data attributes
-            event.target.setAttribute('data-scale', scale);
-            event.target.setAttribute('data-rotation', rotation);
-        },
-    })
     .on('down', dragStartListener);
 
 function dragMoveListener(event) {
+    event.preventDefault();
     var target = event.target;
 
     var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
@@ -73,6 +62,7 @@ function savePosition(element) {
 }
 
 function dragStartListener(event) {
+    event.preventDefault();
     const allWindows = document.querySelectorAll('.miniwindow');
     const zIndexes = Array.from(allWindows).map(el => parseInt(window.getComputedStyle(el).zIndex, 10) || 0);
     const currentMaxZIndex = zIndexes.length > 0 ? Math.max(...zIndexes) : 0;
