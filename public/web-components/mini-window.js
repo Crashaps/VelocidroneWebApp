@@ -7,7 +7,13 @@ class MiniWindow extends HTMLElement {
     connectedCallback() {
         let currentClass = this.getAttribute('class');
         this.setAttribute('class', `miniwindow ${currentClass}`);
-        this.innerHTML = `${this.innerHTML}`;
+        this.innerHTML = `
+        <style>
+        .miniwindow{
+            touch-action: none;
+        }
+        </style>
+        ${this.innerHTML}`;
 
         this.restorePosition();
     }
