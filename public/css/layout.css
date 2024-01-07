@@ -144,15 +144,18 @@ th {
 
 .flex-container {
     display: flex;
-    align-items: center; /* This will vertically center align items if they have different heights */
-  }
+    align-items: center;
+    /* This will vertically center align items if they have different heights */
+}
 
-  .flex-container > div,
-  .flex-container > label,
-  .flex-container > select {
-    margin-right: 10px; /* Adds some space between the elements */
-  }
+.flex-container>div,
+.flex-container>label,
+.flex-container>select {
+    margin-right: 10px;
+    /* Adds some space between the elements */
+}
 
-  #eventEnabledStatus {
-    margin: 0; /* Removes the default margin from the paragraph */
-  }
+#eventEnabledStatus {
+    margin: 0;
+    /* Removes the default margin from the paragraph */
+}

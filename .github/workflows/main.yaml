@@ -63,4 +63,7 @@ jobs:
     - name: Stop, Remove old, Move new, Start
       run: |
         ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent/ && ./stop && rm -r myproject/ && mv newbuild myproject && ./start"
-    
+        
+    - name: Delete SSH Key
+      run: |
+        del "$env:USERPROFILE\.ssh\id_rsa"

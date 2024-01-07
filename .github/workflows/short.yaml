@@ -1,0 +1,112 @@
+name: Deploy TypeScript Project
+
+on:
+  push:
+    branches:
+      - short
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+    environment: short
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '20'
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Build TypeScript
+      run: npm run build
+
+    - name: Create settings.json File
+      run: |
+        echo '{ "serverPort": ${{secrets.SERVERPORT}}, "mongodb": "${{secrets.MONGODB}}", "JWTKey": "${{secrets.JWTKEY}}", "smtpPassword" : "${{secrets.SMTPPASSWORD}}", "smtpUsername" : "${{secrets.SMTPUSERNAME}}", "smtpPort" : ${{secrets.SMTPPORT}}, "smtpHost" : "${{secrets.SMTPHOST}}", "smtpFrom" : "${{secrets.SMTPFROM}}", "smtpSecure" : ${{secrets.SMTPSECURE}} }' > ./build/settings.json
+
+    - name: Install OpenSSH Client (Windows)
+      run: Add-WindowsCapability -Online -Name OpenSSH.Client~~~~0.0.1.0
+
+    - name: Setup SSH Key
+      env:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+      run: |
+        $sshDir = "$env:USERPROFILE\.ssh"
+        $privateKeyFile = "$sshDir\id_rsa"
+        New-Item -ItemType Directory -Force -Path $sshDir
+        Set-Content -Path $privateKeyFile -Value $env:SSH_PRIVATE_KEY
+        & icacls.exe $privateKeyFile /inheritance:r /grant:r "$($env:USERNAME):R"
+        @"
+        Host ${{ secrets.SSH_SERVER }}
+            IdentityFile $privateKeyFile
+            User ${{ secrets.SSH_USERNAME }}
+            StrictHostKeyChecking no
+        "@ | Set-Content -Path "$sshDir\config"
+    
+    - name: Ensure Remote Directory Exists
+      run: |
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "mkdir -p /home/crash/apps/velocevent-short/newbuild/"
+
+    - name: Deploy Files to Server via SCP
+      run: |
+        scp -o ConnectTimeout=60 -r .\build\* ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }}:/home/crash/apps/velocevent-short/newbuild/
+
+    - name: Prepare Failover Server
+      env:
+        FAILOVER_PATH: /home/crash/apps/velocevent-short-failover
+        MAINAPP_PATH: /home/crash/apps/velocevent-short
+        MAINAPP_PORT: ${{ secrets.SERVERPORT}}
+        FAILOVER_PORT: ${{ secrets.FAILOVERPORT}}
+      run: |
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cp -R $env:MAINAPP_PATH/newbuild $env:FAILOVER_PATH/newbuild && sed -i 's/$env:MAINAPP_PORT/$env:FAILOVER_PORT/g' $env:FAILOVER_PATH/newbuild/settings.json && sed -i 's/Home/Home Fail/g' $env:FAILOVER_PATH/newbuild/views/index.html && cd $env:FAILOVER_PATH/newbuild && source scl_source enable nodejs20 && npm install && rm -rf $env:FAILOVER_PATH/myproject && mv $env:FAILOVER_PATH/newbuild $env:FAILOVER_PATH/myproject && cd $env:FAILOVER_PATH && [ -f "$env:FAILOVER_PATH/tmp/node.pid" ] && ./stop && ./start || ./start"
+  
+    - name: Wait for Failover Server to Warm
+      run: sleep 5
+
+    - name: Switch to Failover Application
+      uses: fjogeleit/http-request-action@master
+      with:
+        url: 'https://my.opalstack.com/api/v1/site/update/'
+        method: 'POST'
+        contentType: 'application/json'
+        customHeaders: '{"Content-Type": "application/json", "Authorization": "Token ${{secrets.OPALSTACK_APIKEY}}"}'
+        data: '[{"id": "${{secrets.OPALSTACK_SITE}}", "routes": [{"uri": "/", "app": "${{secrets.OPALSTACK_FAILOVERAPP}}"}]}]'
+        
+    - name: Wait for Switch Operation
+      run: sleep 20
+
+    - name: NPM Install on Server
+      run: |
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent-short/newbuild && source scl_source enable nodejs20 && npm install"
+
+    - name: Stop, Remove old, Move new, Start
+      run: |
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent-short/ && ./stop && rm -r myproject/ && mv newbuild myproject && ./start"
+        
+    - name: Wait for Main Server to Warm
+      run: sleep 2
+
+    - name: Switch to Main Application
+      uses: fjogeleit/http-request-action@master
+      with:
+        url: 'https://my.opalstack.com/api/v1/site/update/'
+        method: 'POST'
+        contentType: 'application/json'
+        customHeaders: '{"Content-Type": "application/json", "Authorization": "Token ${{secrets.OPALSTACK_APIKEY}}"}'
+        data: '[{"id": "${{secrets.OPALSTACK_SITE}}", "routes": [{"uri": "/", "app": "${{secrets.OPALSTACK_MAINAPP}}"}]}]'
+       
+    - name: Wait for Switch Operation
+      run: sleep 20
+
+    - name: Stop Failover
+      run: |
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent-short-failover/ && ./stop"
+
+    - name: Delete SSH Key
+      run: |
+        del "$env:USERPROFILE\.ssh\id_rsa"
