@@ -20,6 +20,8 @@ class CloasableMiniWindow extends MiniWindow {
             background-color: red;
             color: white;
             cursor: pointer;
+            border: 2px ridge rgba(55, 55, 55, 0.85);
+            border-radius: 4px;
         }
         </style>
         ${this.innerHTML}
