@@ -31,3 +31,38 @@
 .fingerPointer{
     cursor: pointer;
 }
+
+.fingerPointer:hover{
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.highlightedRow{
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.highlightedColumn{
+    background: rgba(255, 255, 255, 0.2);
+}
+
+tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+td.raceNumFingerPointer:nth-child(odd) {
+    background-color: rgba(255, 255, 255, 0.1); 
+}
+.raceNumFingerPointer {
+    cursor: pointer;
+}
+td.raceNumFingerPointer:hover{
+    background: rgba(255, 255, 255, 0.2);
+}
+
+tr.highlightedRow {
+    background: rgba(255, 255, 255, 0.2); /* Change color as needed */
+}
+
+/* Highlighted column on hover */
+td.highlightedColumn {
+    background-color: rgba(255, 255, 255, 0.2); /* Change color as needed */
+}

@@ -179,23 +179,67 @@ function fillTimesTable(data) {
     tableBody.innerHTML = "";
     data.forEach((item, index) => {
         let row = tableBody.insertRow();
+        
         let pilotNameCell = row.insertCell(0);
-        pilotNameCell.innerHTML = `<a class="fingerPointer" onclick="replayPilotBest('${item.pilotName}')">${item.pilotName} </a>`;
-
+        pilotNameCell.className = "fingerPointer";
+        pilotNameCell.innerHTML = `${item.pilotName}`;
+        pilotNameCell.addEventListener("click", function(){ replayPilotBest(item.pilotName)});
+        
         item.times.forEach((time) => {
             let timeCell = row.insertCell();
             timeCell.textContent = time;
         });
+
+        // Highlighting row on hover
+        pilotNameCell.addEventListener("mouseover", function() {
+            highlightRow(row);
+        });
+        pilotNameCell.addEventListener("mouseout", function() {
+            removeRowHighlight(row);
+        });
+
 
         const tableHead = document.getElementById("finishTimesTable").tHead;
         var columnCount = tableHead.rows[0].cells.length - 1;
         if (columnCount < item.times.length) {
             for (let i = columnCount + 1; i <= item.times.length; i++) {
                 let newHeader = tableHead.rows[0].insertCell();
-                newHeader.outerHTML = `<th><a class="fingerPointer" onclick="replayHeatIdeal(${i})">Race ${i}</a></th>`;
+                
+                newHeader.innerHTML = `Race ${i}`;
+                newHeader.classList.add("raceNumFingerPointer");
+                newHeader.addEventListener("click", function(){ replayHeatIdeal(i)});
+
+                newHeader.addEventListener("mouseover", function() {
+                    highlightColumn(i);
+                });
+                newHeader.addEventListener("mouseout", function() {
+                    removeColumnHighlight(i);
+                });
             }
         }
     });
+}
+
+function highlightRow(row) {
+    row.classList.add("highlightedRow");
+}
+
+function removeRowHighlight(row) {
+    row.classList.remove("highlightedRow");
+}
+
+function highlightColumn(columnIndex) {
+    const table = document.getElementById("finishTimesTable");
+    for (let i = 0; i < table.rows.length; i++) {
+        table.rows[i].cells[columnIndex].classList.add("highlightedColumn");
+    }
+}
+
+function removeColumnHighlight(columnIndex) {
+    const table = document.getElementById("finishTimesTable");
+    for (let i = 0; i < table.rows.length; i++) {
+        table.rows[i].cells[columnIndex].classList.remove("highlightedColumn");
+    }
 }
 
 function addTimeToTable(data) {
