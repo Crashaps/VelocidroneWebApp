@@ -101,6 +101,10 @@ window.onload = function () {
         .catch((error) => console.error("Error:", error));
 
     window.addEventListener("beforeunload", () => {
+        Array.from(document.getElementsByClassName("miniwindow")).forEach((el) => {
+            savePosition(el);
+        });
+
         resetReplays();
     });
 
@@ -175,173 +179,67 @@ function fillTimesTable(data) {
     tableBody.innerHTML = "";
     data.forEach((item, index) => {
         let row = tableBody.insertRow();
+        
         let pilotNameCell = row.insertCell(0);
-        pilotNameCell.innerHTML = `<a onclick="replayPilotBest('${item.pilotName}')">${item.pilotName} </a>`;
-
+        pilotNameCell.className = "fingerPointer";
+        pilotNameCell.innerHTML = `${item.pilotName}`;
+        pilotNameCell.addEventListener("click", function(){ replayPilotBest(item.pilotName)});
+        
         item.times.forEach((time) => {
             let timeCell = row.insertCell();
             timeCell.textContent = time;
         });
+
+        // Highlighting row on hover
+        pilotNameCell.addEventListener("mouseover", function() {
+            highlightRow(row);
+        });
+        pilotNameCell.addEventListener("mouseout", function() {
+            removeRowHighlight(row);
+        });
+
 
         const tableHead = document.getElementById("finishTimesTable").tHead;
         var columnCount = tableHead.rows[0].cells.length - 1;
         if (columnCount < item.times.length) {
             for (let i = columnCount + 1; i <= item.times.length; i++) {
                 let newHeader = tableHead.rows[0].insertCell();
-                newHeader.outerHTML = `<th><a onclick="replayHeatIdeal(${i})">Race ${i}</a></th>`;
+                
+                newHeader.innerHTML = `Race ${i}`;
+                newHeader.classList.add("raceNumFingerPointer");
+                newHeader.addEventListener("click", function(){ replayHeatIdeal(i)});
+
+                newHeader.addEventListener("mouseover", function() {
+                    highlightColumn(i);
+                });
+                newHeader.addEventListener("mouseout", function() {
+                    removeColumnHighlight(i);
+                });
             }
         }
     });
 }
 
-function resetReplays() {
-    if (document.replayThreads) {
-        document.replayThreads.forEach((thread) => {
-            clearTimeout(thread);
-        });
+function highlightRow(row) {
+    row.classList.add("highlightedRow");
+}
+
+function removeRowHighlight(row) {
+    row.classList.remove("highlightedRow");
+}
+
+function highlightColumn(columnIndex) {
+    const table = document.getElementById("finishTimesTable");
+    for (let i = 0; i < table.rows.length; i++) {
+        table.rows[i].cells[columnIndex].classList.add("highlightedColumn");
     }
-
-    document.replayThreads = [];
 }
 
-function replayPilotDif(pilotName) {
-    document.raceChart.data.datasets = [];
-
-    resetReplays();
-
-    fetch(`/heat/${document.currentEventHost.split("|")[0]}/${encodeURIComponent(pilotName)}`)
-        .then((response) => response.json())
-        .then((data) => {
-            data.forEach((item, index) => {
-                item.gateData.forEach((gateData, gateIndex) => {
-                    document.replayThreads.push(setTimeout(() => {
-                        const randomColor = Math.floor(Math.random() * 16777215).toString(16)
-                        updateRaceChart({
-                            pilotName: `${item.pilotName} ${index}`,
-                            colour: `#${randomColor}`,
-                            gateData: [{
-                                time: (gateIndex == 0 ? gateData.time : gateData.time - item.gateData[gateIndex - 1].time),
-                                gate: gateData.gate,
-                                lap: gateData.lap
-                            }]
-                        });
-                    }, gateData.time * 100));
-                });
-            });
-        }).catch((error) => { console.log(error); });
-}
-
-
-function replayPilotBest(pilotName) {
-    document.raceChart.data.datasets = [];
-
-    resetReplays();
-
-    fetch(`/bestPossible/${document.currentEventHost.split("|")[0]}/${encodeURIComponent(pilotName)}`)
-        .then((response) => response.json())
-        .then((data) => {
-            const colors = createRainbowDiv(0, data.length);
-
-            data.forEach((item, index) => {
-                item.gateData.forEach((gateData, gateIndex) => {
-                    document.replayThreads.push(setTimeout(() => {
-                        updateRaceChart({
-                            pilotName: `${item.pilotName} ${item.heatNumber}`,
-                            colour: item.heatNumber > 0 ? colors[item.heatNumber - 1] : "#000000",
-                            gateData: [{
-                                time: gateData.time,
-                                gate: gateData.gate,
-                                lap: gateData.lap
-                            }]
-                        });
-                    }, gateData.time * 1000));
-                });
-            });
-        }).catch((error) => { console.log(error); });
-}
-
-function replayPilot(pilotName) {
-    document.raceChart.data.datasets = [];
-
-    resetReplays();
-
-    fetch(`/heat/${document.currentEventHost.split("|")[0]}/${encodeURIComponent(pilotName)}`)
-        .then((response) => response.json())
-        .then((data) => {
-
-            data.forEach((item, index) => {
-                item.gateData.forEach((gateData, gateIndex) => {
-                    document.replayThreads.push(setTimeout(() => {
-                        const randomColor = Math.floor(Math.random() * 16777215).toString(16)
-                        updateRaceChart({
-                            pilotName: `${item.pilotName} ${index}`,
-                            colour: `#${randomColor}`,
-                            gateData: [{
-                                time: gateData.time,
-                                gate: gateData.gate,
-                                lap: gateData.lap
-                            }]
-                        });
-                    }, gateData.time * 100));
-                });
-            });
-        }).catch((error) => { console.log(error); });
-}
-
-function replay(heatNumber) {
-    document.raceChart.data.datasets = [];
-
-    resetReplays();
-
-    fetch(`/heatdata/${document.currentEventHost.split("|")[0]}/${heatNumber}`)
-        .then((response) => response.json())
-        .then((data) => {
-            const colors = createRainbowDiv(0, data.length * 1.1);
-
-            data.forEach((item, index) => {
-                item.gateData.forEach((gateData) => {
-                    document.replayThreads.push(setTimeout(() => {
-                        updateRaceChart({
-                            pilotName: item.pilotName,
-                            colour: colors[index],
-                            gateData: [{
-                                time: gateData.time,
-                                gate: gateData.gate,
-                                lap: gateData.lap
-                            }]
-                        });
-                    }, gateData.time * 10));
-                });
-            });
-        }).catch((error) => { console.log(error); });
-}
-
-function replayHeatIdeal(heatNumber) {
-    document.raceChart.data.datasets = [];
-
-    resetReplays();
-
-    fetch(`/heatdata/${document.currentEventHost.split("|")[0]}/${heatNumber}/ideal`)
-        .then((response) => response.json())
-        .then((data) => {
-            const colors = createRainbowDiv(0, data.length * 1.1);
-
-            data.forEach((item, index) => {
-                item.gateData.forEach((gateData) => {
-                    document.replayThreads.push(setTimeout(() => {
-                        updateRaceChart({
-                            pilotName: item.pilotName,
-                            colour: colors[index],
-                            gateData: [{
-                                time: gateData.time,
-                                gate: gateData.gate,
-                                lap: gateData.lap
-                            }]
-                        });
-                    }, gateData.time * 10));
-                });
-            });
-        }).catch((error) => { console.log(error); });
+function removeColumnHighlight(columnIndex) {
+    const table = document.getElementById("finishTimesTable");
+    for (let i = 0; i < table.rows.length; i++) {
+        table.rows[i].cells[columnIndex].classList.remove("highlightedColumn");
+    }
 }
 
 function addTimeToTable(data) {
@@ -351,7 +249,7 @@ function addTimeToTable(data) {
         const tableBody = document.getElementById("finishTimesBody");
         pilotRow = tableBody.insertRow();
         let pilotNameCell = pilotRow.insertCell(0);
-        pilotNameCell.innerHTML = `<a onclick="replayPilotBest('${data.pilotName}')">${data.pilotName} </a>`;
+        pilotNameCell.innerHTML = `<a class="fingerPointer" onclick="replayPilotBest('${data.pilotName}')">${data.pilotName} </a>`;
     }
 
     var cell = pilotRow.insertCell();
@@ -361,7 +259,7 @@ function addTimeToTable(data) {
     var columnCount = tableHead.rows[0].cells.length - 1;
     if (pilotRow.cells.length > tableHead.rows[0].cells.length) {
         let newHeader = tableHead.rows[0].insertCell();
-        newHeader.outerHTML = `<th><a onclick="replay(${pilotRow.cells.length - 1})">Race ${pilotRow.cells.length - 1}</a></th>`;
+        newHeader.outerHTML = `<th><a class="fingerPointer" onclick="replay(${pilotRow.cells.length - 1})">Race ${pilotRow.cells.length - 1}</a></th>`;
     }
 }
 

@@ -140,7 +140,7 @@
 
   <!-- Add Component Window -->
   <side-bar-window id="side-bar-window">
-
+       
   </side-bar-window>
 
   <script>
@@ -168,7 +168,18 @@
           }
         }
       });
+
+      window.addEventListener("beforeunload", () => {
+        Array.from(document.getElementsByClassName("miniwindow")).forEach((el) => {
+          savePosition(el);
+        });
+      });
     };
+
+    function toggleRaceChart() {
+      var raceChart = document.getElementById("race-chart");
+      raceChart.style.display = (raceChart.style.display === 'none' || raceChart.style.display === '') ? 'block' : 'none';
+    }
   </script>
 
 </body>

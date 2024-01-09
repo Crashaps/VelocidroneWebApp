@@ -9,6 +9,9 @@ jobs:
   build-and-deploy:
     runs-on: windows-latest
     environment: short
+    env:
+      MAINAPP_PATH: /home/crash/apps/velocevent-short
+      FAILOVER_PATH: /home/crash/apps/velocevent-short-failover
 
     steps:
     - name: Checkout Repository
@@ -50,20 +53,18 @@ jobs:
     
     - name: Ensure Remote Directory Exists
       run: |
-        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "mkdir -p /home/crash/apps/velocevent-short/newbuild/"
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "mkdir -p $env:MAINAPP_PATH/newbuild/"
 
     - name: Deploy Files to Server via SCP
       run: |
-        scp -o ConnectTimeout=60 -r .\build\* ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }}:/home/crash/apps/velocevent-short/newbuild/
+        scp -o ConnectTimeout=60 -r .\build\* ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }}:$env:MAINAPP_PATH/newbuild/
 
     - name: Prepare Failover Server
       env:
-        FAILOVER_PATH: /home/crash/apps/velocevent-short-failover
-        MAINAPP_PATH: /home/crash/apps/velocevent-short
         MAINAPP_PORT: ${{ secrets.SERVERPORT}}
         FAILOVER_PORT: ${{ secrets.FAILOVERPORT}}
       run: |
-        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cp -R $env:MAINAPP_PATH/newbuild $env:FAILOVER_PATH/newbuild && sed -i 's/$env:MAINAPP_PORT/$env:FAILOVER_PORT/g' $env:FAILOVER_PATH/newbuild/settings.json && sed -i 's/Home/Home Fail/g' $env:FAILOVER_PATH/newbuild/views/index.html && cd $env:FAILOVER_PATH/newbuild && source scl_source enable nodejs20 && npm install && rm -rf $env:FAILOVER_PATH/myproject && mv $env:FAILOVER_PATH/newbuild $env:FAILOVER_PATH/myproject && cd $env:FAILOVER_PATH && [ -f "$env:FAILOVER_PATH/tmp/node.pid" ] && ./stop && ./start || ./start"
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cp -R $env:MAINAPP_PATH/newbuild $env:FAILOVER_PATH/newbuild && sed -i 's/$env:MAINAPP_PORT/$env:FAILOVER_PORT/g' $env:FAILOVER_PATH/newbuild/settings.json && cd $env:FAILOVER_PATH/newbuild && source scl_source enable nodejs20 && npm install && rm -rf $env:FAILOVER_PATH/myproject && mv $env:FAILOVER_PATH/newbuild $env:FAILOVER_PATH/myproject && cd $env:FAILOVER_PATH && [ -f "$env:FAILOVER_PATH/tmp/node.pid" ] && ./stop && ./start || ./start"
   
     - name: Wait for Failover Server to Warm
       run: sleep 5
@@ -82,11 +83,11 @@ jobs:
 
     - name: NPM Install on Server
       run: |
-        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent-short/newbuild && source scl_source enable nodejs20 && npm install"
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd $env:MAINAPP_PATH/newbuild && source scl_source enable nodejs20 && npm install"
 
     - name: Stop, Remove old, Move new, Start
       run: |
-        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent-short/ && ./stop && rm -r myproject/ && mv newbuild myproject && ./start"
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd $env:MAINAPP_PATH/ && ./stop && rm -r myproject/ && mv newbuild myproject && ./start"
         
     - name: Wait for Main Server to Warm
       run: sleep 2
@@ -105,7 +106,7 @@ jobs:
 
     - name: Stop Failover
       run: |
-        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd /home/crash/apps/velocevent-short-failover/ && ./stop"
+        ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_SERVER }} "cd $env:FAILOVER_PATH/ && ./stop"
 
     - name: Delete SSH Key
       run: |
