@@ -5,15 +5,10 @@ class MiniWindow extends HTMLElement {
     }
 
     connectedCallback() {
-        let currentClass = this.getAttribute('class');
-        this.setAttribute('class', `miniwindow ${currentClass}`);
-        this.innerHTML = `
-        <style>
-        .miniwindow{
-            touch-action: none;
-        }
-        </style>
-        ${this.innerHTML}`;
+        const currentClass = this.getAttribute('class');
+        this.setAttribute('class', `miniwindow${currentClass == null ? '' : ' ' + currentClass}`);
+
+        this.style.touchAction = 'none';
 
         this.restorePosition();
     }

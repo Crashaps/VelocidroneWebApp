@@ -1,6 +1,6 @@
 
 
-class CloasableMiniWindow extends MiniWindow {
+class ClosableMiniWindow extends MiniWindow {
     constructor() {
         super();
     }
@@ -8,28 +8,28 @@ class CloasableMiniWindow extends MiniWindow {
     connectedCallback() {
         super.connectedCallback();
 
-        this.innerHTML = `
-        <style>
-        .close-button {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 25px;
-            height: 25px;
-            padding: 0px;
-            background-color: red;
-            color: white;
-            cursor: pointer;
-        }
-        </style>
-        ${this.innerHTML}
-        <button class="close-button">X</button>
-        `
-        const closeButton = this.querySelector('.close-button');
-        closeButton.addEventListener('click', () => {
+        this.closeButton = document.createElement('button');
+        this.closeButton.classList.add('close-button');
+        this.closeButton.innerHTML = 'X';
+
+        this.closeButton.style.position = 'absolute';
+        this.closeButton.style.top = '0';
+        this.closeButton.style.right = '0';
+        this.closeButton.style.width = '25px';
+        this.closeButton.style.height = '25px';
+        this.closeButton.style.padding = '0px';
+
+        this.closeButton.style.backgroundColor ='red';
+        this.closeButton.style.color = 'white';
+
+        this.closeButton.style.cursor = 'pointer';
+
+        this.appendChild(this.closeButton);
+
+        this.closeButton.addEventListener('click', () => {
             this.remove();
         });
     }
 }
 
-customElements.define('mini-window-closable', CloasableMiniWindow);
+customElements.define('mini-window-closable', ClosableMiniWindow);

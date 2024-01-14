@@ -3,7 +3,7 @@ interact('.miniwindow')
     .draggable({
         inertia: false,
         modifiers: [
-
+            
         ],
         autoScroll: false,
         listeners: {
@@ -57,7 +57,6 @@ interact('.miniwindow')
     .on('down', dragStartListener);
 
 function dragMoveListener(event) {
-    event.preventDefault();
     var target = event.target;
 
     var x = (parseFloat(target.getAttribute('data-x')) || 0) + event.dx;
@@ -82,7 +81,6 @@ function savePosition(element) {
 }
 
 function dragStartListener(event) {
-    event.preventDefault();
     const allWindows = document.querySelectorAll('.miniwindow');
     const zIndexes = Array.from(allWindows).map(el => parseInt(window.getComputedStyle(el).zIndex, 10) || 0);
     const currentMaxZIndex = zIndexes.length > 0 ? Math.max(...zIndexes) : 0;

@@ -26,16 +26,46 @@ eventRouter.get("/current-events", async (req: Request, res: Response) => {
 	res.json(e);
 });
 
-eventRouter.post("/create-event", Auth.byToken, async (req: RequestPlus, res: Response) => {
+eventRouter.post("/event", Auth.byToken, async (req: RequestPlus, res: Response) => {
 	if (!req.user) {
 		res.status(401).send();
 		return;
 	}
 
-	const event = Event.createEvent(req.body.name, new Date(Date.now()), new Date(req.body.eventStartDate), req.body.heatCount, [req.user._id], false, true);
+	if (req.body.hostIds.includes(req.user.id) == false) {
+		req.body.hostIds.push(req.user.id);
+	}
+
+	const event = Event.createEvent(req.body.name, new Date(Date.now()), new Date(req.body.eventStartDate), req.body.heatCount, req.body.hostIds, false, true);
 
 	await event.save();
 
+	res.json(event);
+});
+
+eventRouter.put("/event/:id", Auth.byToken, async (req: RequestPlus, res: Response) => {
+	if (!req.user) {
+		res.status(401).send();
+		return;
+	}
+
+	if (req.body.hostIds.includes(req.user.id) == false) {
+		req.body.hostIds.push(req.user.id);
+	}
+
+	const event = await Event.findById(req.params.id);
+	if (!event) {
+		res.status(404).send();
+		return;
+	}
+
+	event.name = req.body.name;
+	event.eventStartDate = new Date(req.body.eventStartDate);
+	event.heatCount = req.body.heatCount;
+	event.hostIds = req.body.hostIds;
+
+	await event.save();
+	
 	res.json(event);
 });
 
@@ -46,7 +76,7 @@ eventRouter.get("/event/:id", Auth.byToken, async (req: RequestPlus, res: Respon
 	}
 
 	const event = await Event.findById(req.params.id);
-	
+
 	if (!event) {
 		res.status(404).send();
 		return;
@@ -57,22 +87,22 @@ eventRouter.get("/event/:id", Auth.byToken, async (req: RequestPlus, res: Respon
 
 eventRouter.put("/enable-event/:id", Auth.byToken, async (req: RequestPlus, res: Response) => {
 	if (!req.user) {
-        res.status(401).send();
-        return;
-    }
+		res.status(401).send();
+		return;
+	}
 
-    const event = await Event.findById(req.params.id);
+	const event = await Event.findById(req.params.id);
 
-    if (!event) {
-        res.status(404).send();
-        return;
-    }
+	if (!event) {
+		res.status(404).send();
+		return;
+	}
 
-    event.active = !event.active;
+	event.active = !event.active;
 
-    await event.save();
+	await event.save();
 
-    res.json(event);
+	res.json(event);
 });
 
 eventRouter.get("/current-finish-times/:eventId", async (req: Request, res: Response) => {
@@ -244,6 +274,29 @@ eventRouter.get("/bestPossible/:eventId/:pilotName", async (req: Request, res: R
 		heatData.push(idealRace);
 
 		res.json(heatData);
+	} catch (error) {
+		res.status(500).send("Error fetching heat data");
+	}
+});
+
+eventRouter.get("/eventHosts/:eventId", async (req: Request, res: Response) => {
+	try {
+		const eventId = req.params.eventId;
+		const event = await Event.findById(eventId) as Event;
+		if (!event) {
+			res.status(404).send();
+			return;
+		}
+
+		const users = await User.find({ _id: { $in: event.hostIds } }) as User[];
+
+		if (!users || users.length === 0) {
+			res.status(404).send();
+			return;
+		}
+
+		res.json({ eventId: event.id, hosts: users.map((u) => { return { id: u._id, name: u.name } }) });
+
 	} catch (error) {
 		res.status(500).send("Error fetching heat data");
 	}

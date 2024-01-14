@@ -44,8 +44,10 @@ server.listen(settings.serverPort, () => {
 
 io.on("connection", function (socket) {
     socket.on("join-room", function (room) {
-        socket.join(room);
-        console.log(`Client: ${socket.id} connected to room: ${room}`);
+        if (!socket.rooms.has(room)) {
+            socket.join(room);
+            console.log(`Client: ${socket.id} connected to room: ${room}`);
+        }
     });
     socket.on("leave-room", function (room) {
         console.log(`Client: ${socket.id} disconnected from room: ${room}`);
