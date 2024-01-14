@@ -17,6 +17,7 @@ class SideBarWindow extends MiniWindow {
         <li>Textarea</li>
       </ul>
       <button id="add-component">Add Component</button>
+      <button onclick="toggleRaceChart()">Toggle Race Chart</button>
     `;  
 
     const addComponentButton = this.querySelector('#add-component');
