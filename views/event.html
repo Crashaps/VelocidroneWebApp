@@ -4,14 +4,20 @@
 <head>
     <title>Event Page</title>
     <script src="/js/interact.min.js"></script>
-    <script src="/js/replay.js"></script>
+    <script src="/js/replayManager.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/socketManager.js"></script>
     <script defer src="web-components/mini-window.js"></script>
     <script defer src="web-components/mini-window-closable.js"></script>
     <script defer src="web-components/side-bar-window.js"></script>
+    <script defer src="web-components/chart-window.js"></script>
+    <script defer src="web-components/live-chart-window.js"></script>
+    <script defer src="web-components/table-window.js"></script>
+    <script defer src="web-components/pilot-times-window.js"></script>
     <script src="/js/colorGen.js"></script>
     <script src="/js/dragResize.js"></script>
+    <script src="/js/event.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/event.css">
     <link rel="stylesheet" href="css/layout.css">
@@ -40,33 +46,15 @@
         </div>
     </div>
 
-    <mini-window-closable id="eventTimes" class="finish-times">
-        <h2>Event Finish Times</h2>
-        <table id="finishTimesTable">
-            <thead>
-                <tr>
-                    <th>Pilot Name</th>
-                </tr>
-            </thead>
-            <tbody id="finishTimesBody">
-                <!-- Pilot names and times will be added here -->
-            </tbody>
-        </table>
-    </mini-window-closable>
+    <pilot-times-window id="eventTimes" class="finish-times">
+    </pilot-times-window>
 
-    <div class="section">
-        <div class="race-status">
-            <h2>Race Status</h2>
-            <div id="raceStatusBox">Waiting for race status...</div>
-        </div>
-    </div>
+    <live-chart-window id="race-chart" class="race-chart">        
+    </live-chart-window>
 
-    <mini-window-closable id="race-chart" class="race-chart">
-        <h2>Race Chart</h2>
-        <canvas id="raceChart"></canvas>
-    </mini-window-closable>
+    <live-chart-window id="race-chart2" class="race-chart">        
+    </live-chart-window>
 
-    <script src="/js/event.js"></script>
 </body>
 
 </html>

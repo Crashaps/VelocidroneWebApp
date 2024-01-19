@@ -106,4 +106,31 @@ userRouter.get("/userdetails", Auth.byToken, async (req: RequestPlus, res: Respo
     res.json({ username: req.user.name, email: req.user.email, apiKey: req.user.apiKey });
 });
 
+userRouter.get("/hosts/:max/:filter?", Auth.byToken, async (req: RequestPlus, res: Response) => {
+    if (!req.user) {
+        res.status(401).send();
+        return;
+    }
+
+    let { max, filter } = req.params;
+    
+    if (!max) {
+        res.status(400).send();
+        return;
+    }
+    
+    if (!filter) {
+        filter = "";
+    }
+
+    const users = await User.find({
+        $or: [
+            { name: { $regex: filter, $options: "i" } }
+        ]
+    }).limit(parseInt(max)) as User[];
+
+    res.json(users.map((u) => { return { name: u.name, id: u._id } }));
+
+});
+
 export default userRouter;

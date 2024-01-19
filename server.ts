@@ -23,6 +23,14 @@ const settings = JSON.parse(fs.readFileSync("./settings.json", "utf-8"));
 
 EmailSenderHolder.initSender(settings.smtpHost, settings.smtpPort, settings.smtpSecure, settings.smtpUsername, settings.smtpPassword, settings.smtpFrom);
 
+mongoose.connection.on('connected', (event) => console.log('connected ' + event));
+mongoose.connection.on('open', (event) => console.log('open ' + event));
+mongoose.connection.on('disconnected', (event) => console.log('disconnected ' + event));
+mongoose.connection.on('reconnected', (event) => console.log('reconnected ' + event));
+mongoose.connection.on('disconnecting', (event) => console.log('disconnecting ' + event));
+mongoose.connection.on('close', (event) => console.log('close ' + event));
+mongoose.connection.on('error', err => console.log(err));
+
 mongoose.connect(settings.mongodb);
 
 app.use(bodyParser.json());
@@ -44,8 +52,10 @@ server.listen(settings.serverPort, () => {
 
 io.on("connection", function (socket) {
     socket.on("join-room", function (room) {
-        socket.join(room);
-        console.log(`Client: ${socket.id} connected to room: ${room}`);
+        if (!socket.rooms.has(room)) {
+            socket.join(room);
+            console.log(`Client: ${socket.id} connected to room: ${room}`);
+        }
     });
     socket.on("leave-room", function (room) {
         console.log(`Client: ${socket.id} disconnected from room: ${room}`);

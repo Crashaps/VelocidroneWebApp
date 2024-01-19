@@ -8,6 +8,8 @@
     <script defer src="web-components/mini-window.js"></script>
     <script defer src="web-components/mini-window-closable.js"></script>
     <script defer src="web-components/side-bar-window.js"></script>
+    <script defer src="web-components/event-form.js"></script>
+    <script src="/web-components/host-select.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="css/event.css">
     <link rel="stylesheet" href="css/layout.css">
@@ -27,18 +29,7 @@
     </div>
     <div class="form-section">
         <h2>Create New Event</h2>
-        <form id="createEventForm">
-            <label for="eventName">Event Name:</label>
-            <input type="text" id="eventName" name="name" required />
-
-            <label for="eventStartDate">Event Start Date:</label>
-            <input type="date" id="eventStartDate" name="eventStartDate" required />
-
-            <label for="heatCount">Heat Count:</label>
-            <input type="number" id="heatCount" name="heatCount" required />
-
-            <button type="submit">Create Event</button>
-        </form>
+        <event-form submit-type="Create"></event-form>
     </div>
 
     <div class="flex-container">
@@ -78,36 +69,6 @@
 
     <script>
         window.onload = function () {
-            document.getElementById('createEventForm').addEventListener('submit', function (e) {
-                e.preventDefault();
-
-                var eventData = {
-                    name: document.getElementById('eventName').value,
-                    eventStartDate: document.getElementById('eventStartDate').value,
-                    heatCount: document.getElementById('heatCount').value
-                };
-
-                const token = localStorage.getItem("token");
-                if (!token) {
-                    alert("You must be logged in to create an event.");
-                    return;
-                }
-
-                fetch('/create-event', {
-                    method: 'POST',
-                    body: JSON.stringify(eventData),
-                    headers: { 'Content-Type': 'application/json', 'Authorization': token }
-                }).then(response => response.json())
-                    .then(data => {
-                        const dropdown = document.getElementById("eventDropdown");
-                        const option = document.createElement("option");
-                        option.value = `${data._id}`;
-                        option.textContent = `${data.name}`;
-                        dropdown.appendChild(option);
-                    })
-                    .catch(error => console.error('Error:', error));
-            });
-
             fetch("/current-events")
                 .then((response) => response.json())
                 .then((events) => {

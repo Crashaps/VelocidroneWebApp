@@ -9,15 +9,20 @@ const auth = {
             const token = req.header("x-api-key");
 
             if (!token) {
-                throw new Error();
+                throw new Error("No token provided");
             }
 
             const user = await User.getByApiKey(token);
+
+            if(!user) {
+                throw new Error("User not found with token");
+            }
+
             req.user = user;
             next();
         }
-        catch (error) {
-            res.status(401).json({ message: "No token provided." });
+        catch (error: any) {
+            res.status(401).json({ message: error.message });
         }
     },
     byToken: async (req: RequestPlus, res: Response, next: NextFunction) => {
