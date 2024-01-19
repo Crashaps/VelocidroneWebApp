@@ -20,12 +20,14 @@ class PilotTimesWindow extends TableWindow {
     }
 
     fillTimesTable(data) {
-        const tbody = this.table.querySelector('#finishTimesBody' + this.id);
-        tbody.innerHTML = "";
+        this.table.remove();
+        this.createTable();
+
+        const tbody = this.table.querySelector('#finishTimesBody' + this.id);        
+
         data.forEach(item => {
             let row = tbody.insertRow();
-            let pilotNameCell = row.insertCell(0);
-            pilotNameCell.innerHTML = `<a class="fingerPointer" onclick="ReplayManager.replayPilotBest('${item.pilotName}')">${item.pilotName} </a>`;
+            this.createPilotNameCell(row, item.pilotName);
             item.times.forEach(time => {
                 let timeCell = row.insertCell();
                 timeCell.textContent = time;
@@ -41,13 +43,32 @@ class PilotTimesWindow extends TableWindow {
 
         if (!pilotRow) {
             pilotRow = tbody.insertRow();
-            let pilotNameCell = pilotRow.insertCell(0);
-            pilotNameCell.innerHTML = `<a class="fingerPointer" onclick="ReplayManager.replayPilotBest('${data.pilotName}')">${data.pilotName} </a>`;
+            this.createPilotNameCell(pilotRow, data.pilotName);
         }
+
         let cell = pilotRow.insertCell();
         cell.textContent = data.time;
 
         this.updateHeaders(pilotRow);
+    }
+
+    createPilotNameCell(pilotRow, pilotName) {
+        let pilotNameCell = pilotRow.insertCell(0);
+        pilotNameCell.className = "fingerPointer";
+        pilotNameCell.innerHTML = pilotName;
+
+        const hLightRow = this.highlightRow.bind(this);
+        const hRemoveRow = this.removeRowHighlight.bind(this);
+
+        pilotNameCell.addEventListener("click", function () {
+            ReplayManager.replayPilotBest(pilotName)
+        });
+        pilotNameCell.addEventListener("mouseover", function () {
+            hLightRow(pilotRow);
+        });
+        pilotNameCell.addEventListener("mouseout", function () {
+            hRemoveRow(pilotRow);
+        });
     }
 
     updateHeaders(pilotRow) {
@@ -55,12 +76,27 @@ class PilotTimesWindow extends TableWindow {
 
         for (let i = headerRow.cells.length; i < pilotRow.cells.length; i++) {
             let newHeader = headerRow.insertCell();
-            newHeader.outerHTML = `<th><a class="fingerPointer" onclick="ReplayManager.replayHeatIdeal(${i})">Race ${i}</a></th>`;
+
+            newHeader.innerHTML = `Race ${i}`;
+            newHeader.classList.add("raceNumFingerPointer");
+
+            const hLightColumn = this.highlightColumn.bind(this);
+            const hRemoveColumn = this.removeColumnHighlight.bind(this);
+
+            newHeader.addEventListener("click", function () {
+                ReplayManager.replayHeatIdeal(i)
+            });
+            newHeader.addEventListener("mouseover", function () {
+                hLightColumn(i);
+            });
+            newHeader.addEventListener("mouseout", function () {
+                hRemoveColumn(i);
+            });
         }
     }
 
     getRowByPilotName(pilotName, tbody) {
-        const rows = tbody.getElementsByTagName("tr");
+        const rows = tbody.rows;
 
         for (let i = 0; i < rows.length; i++) {
             const currentPilotName = rows[i].cells[0].textContent.trim();
@@ -70,6 +106,30 @@ class PilotTimesWindow extends TableWindow {
         }
 
         return null;
+    }
+
+    highlightRow(row) {
+        row.classList.add("highlightedRow");
+    }
+
+    removeRowHighlight(row) {
+        row.classList.remove("highlightedRow");
+    }
+
+    highlightColumn(columnIndex) {
+        for (let i = 0; i < this.table.rows.length; i++) {
+            if ((this.table.rows[i].cells.length - 1) >= columnIndex) {
+                this.table.rows[i].cells[columnIndex].classList.add("highlightedColumn");
+            }
+        }
+    }
+
+    removeColumnHighlight(columnIndex) {
+        for (let i = 0; i < this.table.rows.length; i++) {
+            if ((this.table.rows[i].cells.length - 1) >= columnIndex) {
+                this.table.rows[i].cells[columnIndex].classList.remove("highlightedColumn");
+            }
+        }
     }
 }
 
