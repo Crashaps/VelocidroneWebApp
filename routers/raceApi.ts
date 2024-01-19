@@ -144,7 +144,9 @@ raceRouter.post("/racedata", auth.byApiKey, async (req: RequestPlus, res: Respon
         }
     }
     catch (error) {
+        console.error({ time: new Date(Date.now()).toUTCString(), error: error });
         res.status(500).send({ error: "Internal server error" });
+        return;
     }
 
     res.send("Data received and saved");
