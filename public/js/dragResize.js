@@ -81,11 +81,6 @@ function savePosition(element) {
 }
 
 function dragStartListener(event) {
-    if (event.target.matches('select, select *')) {
-        event.interactable.stop();
-        return;
-    }
-
     const allWindows = document.querySelectorAll('.miniwindow');
     const zIndexes = Array.from(allWindows).map(el => parseInt(window.getComputedStyle(el).zIndex, 10) || 0);
     const currentMaxZIndex = zIndexes.length > 0 ? Math.max(...zIndexes) : 0;

@@ -8,7 +8,7 @@ import RequestPlus from "../models/RequestPlus";
 const raceRouter = express.Router();
 
 raceRouter.post("/racestatus", auth.byApiKey, async (req: RequestPlus, res: Response) => {
-    const event = await Event.findOneByHostId(req.user?._id);
+    const event = await Event.findOneByHostId(req.user?._id.toString());
 
     if (event === null) {
         res.status(400).send("Event not found");
@@ -23,7 +23,7 @@ raceRouter.post("/racestatus", auth.byApiKey, async (req: RequestPlus, res: Resp
         //raceStarted = false;
     }
     else if (req.body.racestatus.raceAction == "abort") {
-        const races = await Race.findByEventIdAndHostId(event?._id, req.user?._id, false);
+        const races = await Race.findByEventIdAndHostId(event?._id.toString(), req.user?._id.toString(), false);
 
         races.forEach((race) => {
             race.aborted = true;
@@ -47,7 +47,7 @@ raceRouter.post("/racedata", auth.byApiKey, async (req: RequestPlus, res: Respon
             return;
         }
 
-        const event = await Event.findOneByHostId(req.user._id);
+        const event = await Event.findOneByHostId(req.user._id.toString());
 
         if (!event) {
             res.status(401).send();
