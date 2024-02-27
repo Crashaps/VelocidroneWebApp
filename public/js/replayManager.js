@@ -85,20 +85,34 @@ class ReplayManager {
         }));
     }
 
+    static preparePilotReplayData(rawData) {
+        const colors = createRainbowDiv(0, rawData.length * 1.1);
+
+        ReplayManager.replayData = rawData.map((item, index) => ({
+            pilotName: `${item.pilotName} (${index + 1})`,
+            colour: colors[rawData.indexOf(item)],
+            gateData: item.gateData.map(gateData => ({
+                time: gateData.time * 1000, // Convert time to milliseconds
+                gate: gateData.gate,
+                lap: gateData.lap
+            }))
+        }));
+    }
+
     static getRandomColor() {
         return `#${Math.floor(Math.random() * 16777215).toString(16)}`;
     }
 
     static replayPilotDif(pilotName) {
-        ReplayManager.fetchReplayData(`/heat/${document.currentEventId}/${encodeURIComponent(pilotName)}`);
+        ReplayManager.fetchPilotReplayData(`/heat/${document.currentEventId}/${encodeURIComponent(pilotName)}`);
     }
 
     static replayPilotBest(pilotName) {
-        ReplayManager.fetchReplayData(`/bestPossible/${document.currentEventId}/${encodeURIComponent(pilotName)}`);
+        ReplayManager.fetchPilotReplayData(`/bestPossible/${document.currentEventId}/${encodeURIComponent(pilotName)}`);
     }
 
     static replayPilot(pilotName) {
-        ReplayManager.fetchReplayData(`/heat/${document.currentEventId}/${encodeURIComponent(pilotName)}`);
+        ReplayManager.fetchPilotReplayData(`/heat/${document.currentEventId}/${encodeURIComponent(pilotName)}`);
     }
 
     static replay(heatNumber) {
@@ -115,6 +129,16 @@ class ReplayManager {
             .then((data) => {
                 ReplayManager.resetReplays();
                 ReplayManager.prepareReplayData(data);
+                ReplayManager.startReplayLoop();
+            }).catch((error) => { console.log(error); });
+    }
+
+    static fetchPilotReplayData(url) {
+        fetch(url)
+            .then((response) => response.json())
+            .then((data) => {
+                ReplayManager.resetReplays();
+                ReplayManager.preparePilotReplayData(data);
                 ReplayManager.startReplayLoop();
             }).catch((error) => { console.log(error); });
     }

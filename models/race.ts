@@ -22,6 +22,7 @@ export interface IRaceData extends Document {
     points?: number;
     eventId: string;
     hostId: string;
+    raceId: string;
 }
 
 const RaceDataSchema: Schema = new mongoose.Schema({
@@ -39,7 +40,8 @@ const RaceDataSchema: Schema = new mongoose.Schema({
     heatNumber: Number,
     points: Number,
     eventId: String,
-    hostId: String
+    hostId: String,
+    raceId: { type: String, required: true }
 });
 
 const RaceData: Model<IRaceData> = mongoose.model<IRaceData>("RaceData", RaceDataSchema);
@@ -58,6 +60,7 @@ class Race extends RaceData {
         this.eventId = race?.eventId ?? "";
         this.hostId = race?.hostId ?? "";
         this.aborted = race?.aborted ?? false;
+        this.raceId = race?.raceId ?? "";
 
         this.gateData = race?.gateData ?? [];
 
@@ -89,7 +92,8 @@ class Race extends RaceData {
         heatNumber: number,
         eventId: string,
         hostId: string,
-        points?: number
+        points?: number,
+        raceId?: string
     ): Race {
         const race = new Race();
         race.pilotName = pilotName;
@@ -101,6 +105,7 @@ class Race extends RaceData {
         race.points = points;
         race.eventId = eventId;
         race.hostId = hostId;
+        race.raceId = raceId ?? "";
         race.gateData = [];
         return race;
     }
@@ -117,12 +122,21 @@ class Race extends RaceData {
         race.points = this.points;
         race.eventId = this.eventId;
         race.hostId = this.hostId;
+        race.raceId = this.raceId;
         race.gateData = this.gateData;
         return race;
     }
 
     static async getByPilotName(pilotName: string): Promise<Race[]> {
         return (await this.find({ pilotName: pilotName })) as Race[];
+    }
+
+    static async findByRaceIdAndPilotName(raceId: string, hostId: string, pilotName: string): Promise<Race[]> {
+        return await this.find({ raceId: raceId, hostId: hostId, pilotName: pilotName });
+    }
+
+    static async findByRaceId(raceId: string, eventId: string, hostId: string): Promise<Race[]> {
+        return await this.find({ raceId, eventId, hostId });
     }
 
     static async findByEventIdAndHeatNumber(eventId: string, heatNumber: number, finished?: boolean, aborted: boolean = false): Promise<Race[]> {
