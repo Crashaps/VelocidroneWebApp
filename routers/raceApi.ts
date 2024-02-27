@@ -27,12 +27,11 @@ raceRouter.post("/racestatus", auth.byApiKey, async (req: RequestPlus, res: Resp
             //raceStarted = false;
         }
         else if (raceStatus.raceAction == "abort") {
-            const races = await Race.findByRaceId(payload.raceId, event._id.toString(), req.user?._id.toString()); // await Race.findByEventIdAndHostId(event?._id.toString(), req.user?._id.toString(), false);
-
-            races.forEach((race) => {
-                race.aborted = true;
-                race.updateOne();
-            });
+            await Race.updateMany(
+                { raceId: payload.raceId, eventId: event._id.toString(), hostId: req.user?._id.toString() },
+                { $set: { aborted: true } },
+                { multi: true }
+            );
         }
     } catch (error) {
         console.error(error);

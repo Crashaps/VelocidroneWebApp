@@ -136,7 +136,7 @@ class Race extends RaceData {
     }
 
     static async findByRaceId(raceId: string, eventId: string, hostId: string): Promise<Race[]> {
-        return await this.find({ raceId, hostId });
+        return await this.find({ raceId, eventId, hostId });
     }
 
     static async findByEventIdAndHeatNumber(eventId: string, heatNumber: number, finished?: boolean, aborted: boolean = false): Promise<Race[]> {
