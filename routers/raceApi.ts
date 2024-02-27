@@ -15,20 +15,28 @@ raceRouter.post("/racestatus", auth.byApiKey, async (req: RequestPlus, res: Resp
         return;
     }
 
-    if (req.body.racestatus.raceAction == "start") {
-        // raceDateTime = new Date(Date.now());
-        // raceStarted = true;
-    }
-    else if (req.body.racestatus.raceAction == "race finished") {
-        //raceStarted = false;
-    }
-    else if (req.body.racestatus.raceAction == "abort") {
-        const races = await Race.findByEventIdAndHostId(event?._id.toString(), req.user?._id.toString(), false);
+    const payload = req.body;
+    const raceStatus = payload.racestatus;
 
-        races.forEach((race) => {
-            race.aborted = true;
-            race.save();
-        });
+    try {
+        if (raceStatus.raceAction == "start") {
+            // raceDateTime = new Date(Date.now());
+            // raceStarted = true;
+        }
+        else if (raceStatus.raceAction == "race finished") {
+            //raceStarted = false;
+        }
+        else if (raceStatus.raceAction == "abort") {
+            const races = await Race.findByRaceId(payload.raceId, event._id.toString(), req.user?._id.toString()); // await Race.findByEventIdAndHostId(event?._id.toString(), req.user?._id.toString(), false);
+
+            races.forEach((race) => {
+                race.aborted = true;
+                race.updateOne();
+            });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Internal server error');
     }
 
     if (req.io) {
@@ -40,7 +48,8 @@ raceRouter.post("/racestatus", auth.byApiKey, async (req: RequestPlus, res: Resp
 
 raceRouter.post("/racedata", auth.byApiKey, async (req: RequestPlus, res: Response) => {
     try {
-        const raceData = req.body;
+        const payload = req.body;
+        const raceData = payload.racedata;
 
         if (!req.user) {
             res.status(401).send();
@@ -54,13 +63,13 @@ raceRouter.post("/racedata", auth.byApiKey, async (req: RequestPlus, res: Respon
             return;
         }
 
-        for (const pilotName of Object.keys(raceData["racedata"])) {
-            const pilotRace = raceData["racedata"][pilotName];
+        for (const pilotName of Object.keys(raceData)) {
+            const pilotRace = raceData[pilotName];
             const pilotFinished = pilotRace.finished.toLowerCase() == "true";
 
             let data: Race | null;
 
-            let races = await Race.findByEventIdAndPilotName(event._id.toString(), pilotName, false);
+            let races = await Race.findByRaceIdAndPilotName(payload.raceId, req.user._id.toString(), pilotName); // await Race.findByEventIdAndPilotName(event._id.toString(), pilotName, false);
 
             if (races.length > 1) {
                 const heatNumber = races[0].heatNumber;
@@ -94,7 +103,7 @@ raceRouter.post("/racedata", auth.byApiKey, async (req: RequestPlus, res: Respon
             }
             else {
                 const heatNumber = await Race.countByPilotAndEventId(pilotName, String(event._id), true);
-                data = Race.createRace(pilotName, pilotFinished, false, "#" + pilotRace.colour, new Date(Date.now()), heatNumber + 1, event._id, req.user._id);
+                data = Race.createRace(pilotName, pilotFinished, false, "#" + pilotRace.colour, new Date(Date.now()), heatNumber + 1, event._id, req.user._id, undefined, payload.raceId);
             }
 
             data.addGateData(pilotRace.position, pilotRace.lap, pilotRace.gate, pilotRace.time);
